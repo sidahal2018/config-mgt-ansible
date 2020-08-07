@@ -1,0 +1,6 @@
+---
+
+- name: clone tooling website
+  git:
+   repo: https://github.com/propitix/tooling
+   dest: "/var/www/{{ http_host }}/tooling"

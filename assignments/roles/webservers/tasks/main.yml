@@ -1,0 +1,12 @@
+---
+
+- name: install packages
+  include: installpkg.yml 
+
+- name: Set up Apache virtuahHost
+  include: configureapache.yml
+
+- name: clone tooling website
+  include: deploytooling.yml
+   
+
