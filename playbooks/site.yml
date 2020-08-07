@@ -1,5 +1,4 @@
 ---
-- include: common.yml
-  remote_user: root
+- import_playbook: ../assignments/webservers.yml
 
 
