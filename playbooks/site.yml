@@ -1,5 +1,12 @@
 ---
-- include: common.yml
-  remote_user: root
+
+- name: ensure nfs is at the latest version
+  include: common.yml
+#- import_playbook: ../assignments/database.yml
+#- import_playbook: ../assignments/webservers.yml
+- import_playbook: ../assignments/nfsserver.yml
+
+#- import_playbook: ../assignments/java.yml
+#- import_playbook: ../assignments/jenkins-master.yml
 
 

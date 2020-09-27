@@ -1,0 +1,35 @@
+---
+
+- name: Exporting to shared directory on host for Jenkins
+  file:
+    path: /mnt/propitix_opt
+    state: directory
+    mode: '0755'
+
+- name: Exporting to shared apps directory on host for Webserver apps
+  file:
+    path: /mnt/propitix_apps
+    state: directory
+    mode: '0755'
+
+- name: Exporting to shared logs directory on host for Webserver logs
+  file:
+    path: /mnt/propitix_logs
+    state: directory
+    mode: '0755'
+
+
+- name: Exporting to shared db directory on host for dbserver
+  file:
+    path: /mnt/propitix_db
+    state: directory
+    mode: '0755'
+ 
+
+- name: copying /etc/exports file for nfs server
+  template:
+   src: export_nfs.j2
+   dest: "/etc/exports"
+   owner: root
+   group: root
+   mode: 0600

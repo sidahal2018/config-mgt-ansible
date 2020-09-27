@@ -1,0 +1,8 @@
+---
+# store all global variables that need to be accessed by multiple roles
+# The common variables between both mysql and webserver roles
+# This variables  will be benefited by all the groups 
+
+
+tooling_db_username: "siki" 
+tooling_db_password: "siki"

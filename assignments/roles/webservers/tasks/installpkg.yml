@@ -1,0 +1,13 @@
+---
+
+- name: install packages
+  apt: name={{ item }} update_cache=yes state=present
+  with_items:
+    - apache2
+    - git
+    - php
+    - mysql-common
+    - php7.4-mysql
+    - libapache2-mod-php
+  notify:
+   - start apache2 service

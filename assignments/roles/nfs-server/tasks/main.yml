@@ -1,0 +1,6 @@
+---
+- name: including task from install_nfs.yml
+  include: install_nfs.yml
+
+- name: including task from configure_nfs.yml
+  include: configure_nfs.yml

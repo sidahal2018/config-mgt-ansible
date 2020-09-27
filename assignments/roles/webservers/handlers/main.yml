@@ -1,0 +1,7 @@
+---
+# handlers file for webservers
+ - name: start apache2 service
+   service: name=apache2 enabled=yes state=started
+
+ - name: restart apache2 service
+   service: name=apache2  state=restarted
