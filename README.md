@@ -181,13 +181,13 @@ load_balancer_is_required: true
 
 To test this, you will need to have another set of servers, update inventory for each environment, and run Ansible by specifying the respective environment. (If your laptop resources cannot accomodate more virtual servers, you can use AWS to create virtual servers in the cloud. [here is how to get AWS VMs](https://www.youtube.com/watch?v=xxKuB9kJoYM&list=PLtPuNR8I4TvkwU7Zu0l0G_uwtSUXLckvh&index=6)
 
-## Lets get started with documenting project-13 solution as below:##
+## Lets get started with documenting project-13 solution as below ##
 
-###  - Prepare Remote Source Repository Gitlab or GitHub ###
+### Prepare Remote Source Repository Gitlab or GitHub ###
 1. Login to your Gitlab account.
 2. Create a new repository and name it "pbl".
 
-### - Create Virtual Machines ###
+### - Setting up Infrastructure ###
 
 1. Login into your GCP account.
 2. Create Centos8 Control Machine
@@ -230,6 +230,7 @@ If you have Ansible 2.9 or older installed, you need to use pip uninstall ansibl
 
 #### To connect to Remote servers ####
 Gennerate ssh keys and copy it to remote servers
+
 `ssh-copy-id -i .ssh/id_rsa.pub root@54.147.121.140`
 
 #### On remote servers update ####
@@ -264,10 +265,12 @@ We can search environment
  env | grep ANSIBLE   
 
 
-## Indroducing Mysql Ansible Role ##
+## Introducing Mysql Ansible Role ##
 
-Here I am going to implement mysql role downloaded ansibel galaxy
-run the command `ansible-galaxy install geerlingguy.mysql`. Once downloaded, rename the folder to `mysql`
+Here I am going to implement mysql role downloaded ansible galaxy
+
+run the command `ansible-galaxy install geerlingguy.mysql`. 
+Once downloaded, rename the folder to `mysql`
 `sudo mv geerlingguy.mysql mysql`
 
 Implementing mysql role for tooling website:
@@ -277,13 +280,372 @@ MySQL role is going to install and configure MySQL database on the Target host.
 2. Start the MySQL service and enable it to start at boot.
 3. Set the MySQL  password.
 4. Create a database for tooling.
-5 .Create a database user for tooling 
-We are going to template the `tooling_db.sql file` for mysql becasue we need to use it to load the data initial data. However we dont need to put any variable inside the file since it will load directelcy as it is.
+5. Create a database user for tooling.
+
+On mysql role, using `defaults/main.yml` to define the variable, add the following :
+```
+  tooling_db_username: "siki"
+  tooling_db_password: "siki"
+  tooling_db_name: "tooling_db"
+
+```
+We are going to template the `tooling_db.sql file` for mysql becasue we need to use it to load the data initial data. However we dont need to put any variable inside the file since it will load directly as it is on gthe script
 We are going to use the ansible mysql module for the create and insert module
 
-#### Indroducing  Nginx Role #### 
+ mkdir files
+ create `tooling_db.sql file and paste the tooling_db.sql script 
 
-### Indroducing  apache role Role 
+on the mysql roles under tasks folder create load-mysql.yml file and add the following tasks
+
+
+```
+
+  ---
+- name: Creating MySQL user for toooling website
+  mysql_user:
+    name: "{{ tooling_db_username }}"
+    password: "{{ tooling_db_password }}"
+    priv: "{{ tooling_db_name }}.*:ALL"
+    state: present
+
+- name: Creatinng new database
+  mysql_db:
+    name: "{{ tooling_db_name }}"
+    state: present
+
+- name: Create target directory
+  file: 
+   path: /temp
+   state: directory 
+   mode: 0755
+
+- name: copy the sql file onto the server
+  copy:
+   src: tooling-db.sql
+   dest: /temp/tooling-db.sql
+
+- name: Restoring DB
+  mysql_db:
+    name: "{{ tooling_db_name }}"
+    login_user: "{{ tooling_db_username }}"
+    login_password: "{{ tooling_db_password }}"
+    state: import
+    target: /temp/tooling-db.sql
+  tags:
+    - restore_db
+
+
+```
+
+## Introducing Nginx Ansible Role ##
+
+Install the nginx packages.
+
+Start the nginx service and enable it to start at boot.
+
+Copy the  Nginx virtual host configuration template file from the Ansible control machine to the Ansible Target host.
+
+Configure letsencrypt as part of nginx role
+
+On nginx role, using `defaults/main.yml` to define the variable, add the following :
+```
+ 
+  defaults file for nginx
+  certbot_site_names: "sikisharm.ml"
+  server_name: "sikisharm.ml"
+  tooling_root_dir: "/var/www/html/tooling/html"
+  certbot_package: "python-certbot-nginx"
+  certbot_plugin: "nginx"
+  certbot_mail_address: sidahal@gmail.com
+  enable_nginx_lb: false
+  load_balancer_is_required: false
+
+```
+on the handlers main.yml 
+
+```
+   ---
+   # handlers file for nginx
+   - name: restart nginx
+    service: name=nginx state=restarted
+
+   - name: start nginx
+    service: name=nginx state=started
+
+
+
+````
+on the tasks folder we have the follwing YAML files
+ 
+auto-RenewalCron.yml
+configure_nginx.yml
+install-packages.yml 
+setup-ssl.yml
+main.yml
+ 
+ `auto-RenewalCron.yml`
+  ```
+    `---
+     - name: Set Letsencrypt Cronjob for Certificate Auto Renewal
+      cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
+      when: ansible_facts['os_family'] == "RedHat"
+
+  ```
+
+
+  `configure_nginx.yml`
+ ```
+  ---
+- name: clone tooling website from github
+  git:
+   repo: https://github.com/darey-io/tooling.git
+   dest: /var/www/html/tooling
+   clone: yes
+   force: yes
+
+- name: Creating sites-available directory on host for Nginx
+  file:
+    path: /etc/nginx/{{ item }}
+    state: directory
+    mode: '0755'
+  with_items:
+   - sites-available
+   - sites-enabled
+
+
+- name: Deploy nginx configuation file
+  template:
+     src: nginx-tooling.j2
+     dest: "/etc/nginx/nginx.conf"
+     force: yes
+  notify:
+   - restart nginx
+
+- name: Deploy nginx configuation file
+  template:
+     src: nginx-configuration.j2
+     dest: "/etc/nginx/sites-available/{{ server_name }}.conf"
+     force: yes
+  notify:
+   - restart nginx
+
+- name: Enable tooling website
+  file:
+    src: "/etc/nginx/sites-available/{{ server_name }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ server_name }}.conf"
+    state: link
+    force: yes
+  notify:
+   - restart nginx
+
+- name: de-activate default nginx 
+  file:
+    path: /usr/share/nginx/html/index.html
+    mode: '0755'
+    state: absent
+  notify:
+   - restart nginx
+
+
+- name: Add enabled Nginx site to /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    regexp: "127.0.0.1"
+    line: "18.234.60.170 {{ server_name }}"
+  notify:
+   - restart nginx
+
+ ```
+ `install-packages.yml`
+
+ ---
+    - name: install necessary packages
+    package: name={{item}} update_cache=yes state=present
+    with_items:
+    - epel-release
+    - nginx
+    - git
+    - php
+    - php-gd
+    - php-mysqli
+     notify:
+   - start nginx 
+
+  
+
+   `main.yml`
+
+   ``` ---
+   # tasks file for nginx
+   - include_tasks: install-packages.yml
+   - include_tasks: configure_nginx.yml
+   # - include_tasks: setup-ssl.yml
+   #   when: ansible_os_family == 'RedHat'
+   # - include_tasks: auto-RenewalCron.yml
+
+  under templates we have two jinga2 file for nginx configuration
+ 
+ `nginx-configuration.j2`
+  
+   server {
+        listen       80;
+        server_name  {{ server_name }};
+        root         {{ tooling_root_dir }};
+        index        login.php index.htm;
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+        location / {
+        }
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+        error_page 500 502 503 504 /50x.html;
+        }
+# Settings for a TLS enabled server.
+
+     server {
+         listen  443 ssl http2;
+
+         server_name  sikisharm.ml;
+         root         /var/www/html/tooling/html;
+         index       login.php;
+
+         ssl_certificate /etc/letsencrypt/live/sikisharm.ml/fullchain.pem; # managed by Certbot
+         ssl_certificate_key /etc/letsencrypt/live/sikisharm.ml/privkey.pem; # managed by Certbot
+         include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+         ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+
+
+
+
+         # Load configuration files for the default server block.
+         include /etc/nginx/default.d/*.conf;
+
+         location / {
+         }
+
+         error_page 404 /404.html;
+         location = /404.html {
+         }
+
+         error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+
+
+ }
+
+upstream backend  {
+  server sikisharm.ml;
+}
+
+ server {
+  location / {
+    proxy_pass  http://backend;
+  }
+}
+
+
+
+
+
+ `nginx-tooling.j2`
+  
+  # For more information on configuration, see:
+#   * Official English Documentation: http://nginx.org/en/docs/
+#   * Official Russian Documentation: http://nginx.org/ru/docs/
+
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log;
+pid /run/nginx.pid;
+
+# Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
+include /usr/share/nginx/modules/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile            on;
+    tcp_nopush          on;
+    tcp_nodelay         on;
+    keepalive_timeout   65;
+    types_hash_max_size 2048;
+
+    include             /etc/nginx/mime.types;
+    default_type        application/octet-stream;
+
+    # Load modular configuration files from the /etc/nginx/conf.d directory.
+    # See http://nginx.org/en/docs/ngx_core_module.html#include
+    # for more information.
+    include /etc/nginx/conf.d/*.conf;
+
+    server {
+        listen       80 default_server;
+        listen       [::]:80 default_server;
+        server_name  18.212.192.154;
+        root         /usr/share/nginx/html;
+# Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+        }
+
+        error_page 404 /404.html;
+        location = /404.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+    }
+
+
+# Settings for a TLS enabled server.
+#
+#    server {
+#        listen       443 ssl http2 default_server;
+#        listen       [::]:443 ssl http2 default_server;
+#        server_name  _;
+#        root         /usr/share/nginx/html;
+#
+#        ssl_certificate "/etc/pki/nginx/server.crt";
+#        ssl_certificate_key "/etc/pki/nginx/private/server.key";
+#        ssl_session_cache shared:SSL:1m;
+#        ssl_session_timeout  10m;
+#        ssl_ciphers HIGH:!aNULL:!MD5;
+#        ssl_prefer_server_ciphers on;
+#
+#        # Load configuration files for the default server block.
+#        include /etc/nginx/default.d/*.conf;
+#
+#        location / {
+#        }
+#
+#        error_page 404 /404.html;
+#        location = /404.html {
+#        }
+#
+#        error_page 500 502 503 504 /50x.html;
+#        location = /50x.html {
+#        }
+#    }
+     include /etc/nginx/sites-enabled/*.conf;
+
+}
+
+
+## Indroducing  Apache role Role ## 
 Apache role to install and configure Apache on the Target host. This playbook will do the following things:
 
 Install the Apache package.
@@ -291,7 +653,7 @@ Start the Apache service and enable it to start at boot.
 Create an Apache web root directory.
 Copy the Apache virtual host configuration template file from the Ansible control machine to the Ansible Target host.
 
-# Indroducing Java and Jenkins Role 
+## Indroducing Java and Jenkins Role ## 
 Lets install Jenkins role from the Ansible community
 Run the command below to install an Ansible Role for Jenkins
 ansible-galaxy install geerlingguy.jenkins
