@@ -188,36 +188,39 @@ To test this, you will need to have another set of servers, update inventory for
 2. Create a new repository and name it "pbl".
 
 ### 2 - Create VM  ###
-Only on this server, Ansible will be installed.
 
 1. Login into your GCP account.
 2. Create Centos8 Control Machine
 3. Login in to the control machine 
-4. Create directoy to store all our Ansible file 
-5. Installing Ansible with pip
+4. Create directoy to store all our ansible file 
+5. Installing ansible on control machine.
+   `sudo yum epel-release`
+  `sudo yum install ansible`
+6. Installing Ansible with pip
 
 Ansible can be installed with pip, the Python package manager. If pip isn’t already available on your system of Python, run the following commands to install it:
 
-$ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-$ python get-pip.py --user
+` curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py`
+` python get-pip.py --user`
 
-upgrading python to 2.9 to 2.10.14
+7. upgrading python to 2.9 to 2.10.14
 
 If you have Ansible 2.9 or older installed, you need to use pip uninstall ansible first to remove older versions of Ansible before re-installing it.
 
-first we check pip: which pip3
- pip3 uninstall ansible
- install: pip3 install ansible
+8. first we check pip and uninstall ansible
+`which pip3`
+ `pip3 uninstall ansible`
+9. installing ansible with pip:
+`pip3 install ansible`
 
 
-To connect to Remote servers,
+#### To connect to Remote servers
 Gennerate ssh keys and copy it to remote servers
 ssh-copy-id -i .ssh/id_rsa.pub root@54.147.121.140
 
+#### On remote servers upadte 
+client machines:
 
-
-[ Client Machines]
-on nfs,jwebservers,db,and jenkins-master client machines:
 * sudo su
 * passwd
 * sudo nano /etc/ssh/sshd_config
@@ -313,8 +316,16 @@ To install a list of plugins, you may do this:
   with_items:
     - git
     - maven
+update "site.yml" file and import playbook "jenkins.yml" and "java.yml" files, which will call for "jenkins" role and java role respectively
+ on the browser and accessing jenkins by "public ip:8080"
+
+ ![](./images/images_plugin_blueocean.png)
+
+ ![](./images/pipeline-jenkins.png)
+
+we can see  "open blue ocean" plugin installed
 
 ### Indroducing Nginx as a load balancer
 
 
-## Submitted the solution for review and feedback. Thank you ##
+### Submitted the solution for review and feedback. Thank you ##
