@@ -181,54 +181,70 @@ load_balancer_is_required: true
 
 To test this, you will need to have another set of servers, update inventory for each environment, and run Ansible by specifying the respective environment. (If your laptop resources cannot accomodate more virtual servers, you can use AWS to create virtual servers in the cloud. [here is how to get AWS VMs](https://www.youtube.com/watch?v=xxKuB9kJoYM&list=PLtPuNR8I4TvkwU7Zu0l0G_uwtSUXLckvh&index=6)
 
-# Lets get started with documenting Project13 Solution as Below:
+## Lets get started with documenting project-13 solution as below:##
 
-### 1 - Prepare Remote Source Repository Gitlab or GitHub ###
+###  - Prepare Remote Source Repository Gitlab or GitHub ###
 1. Login to your Gitlab account.
 2. Create a new repository and name it "pbl".
 
-### 2 - Create VM  ###
+### - Create Virtual Machines ###
 
 1. Login into your GCP account.
 2. Create Centos8 Control Machine
 3. Login in to the control machine 
 4. Create directoy to store all our ansible file 
 5. Installing ansible on control machine.
-   `sudo yum epel-release`
-  `sudo yum install ansible`
+```
+   sudo yum epel-release
+   sudo yum install ansible
+```
+
 6. Installing Ansible with pip
 
 Ansible can be installed with pip, the Python package manager. If pip isn’t already available on your system of Python, run the following commands to install it:
 
-` curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py`
-` python get-pip.py --user`
+```
+   curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+   python get-pip.py --user
+
+```
+
 
 7. upgrading python to 2.9 to 2.10.14
 
 If you have Ansible 2.9 or older installed, you need to use pip uninstall ansible first to remove older versions of Ansible before re-installing it.
 
 8. first we check pip and uninstall ansible
-`which pip3`
- `pip3 uninstall ansible`
+ ```
+   which pip3
+   pip3 uninstall ansible
+```
+
 9. installing ansible with pip:
-`pip3 install ansible`
 
+ ```
+   pip3 install ansible
+  
+```
+10. Clone the gitlab url
 
-#### To connect to Remote servers
+#### To connect to Remote servers ####
 Gennerate ssh keys and copy it to remote servers
-ssh-copy-id -i .ssh/id_rsa.pub root@54.147.121.140
+`ssh-copy-id -i .ssh/id_rsa.pub root@54.147.121.140`
 
-#### On remote servers upadte 
-client machines:
+#### On remote servers update ####
 
-* sudo su
-* passwd
-* sudo nano /etc/ssh/sshd_config
-* open port22
-* permitRootlogin yes
-* password authention yes
-* systemctl restart sshd
-* systemctl status sshd
+* `sudo su`
+* `passwd`
+* `sudo nano /etc/ssh/sshd_config`
+ ```
+   open port22
+   permitRootlogin yes
+   password authention yes
+   
+```
+* `systemctl restart sshd`
+* `systemctl status sshd`
 
 Ansible uses a configuration file to customize settings. The file is ansible.cfg file. It can be located anywhere. We just need to export an environmetal variable to let Ansible know where to find this file.
 
@@ -243,11 +259,13 @@ export ANSIBLE_CONFIG=<FULL PATH TO YOUR ansible.cfg File
 
 export ANSIBLE_CONFIG=/home/sidahal2018/Ansible/ansible.cfg
 
- env | grep ANSIBLE    >> we can search environment
-ANSIBLE_CONFIG=/home/siki/Ansible/ansible.cfg
+We can search environment
+
+ env | grep ANSIBLE   
 
 
-## Indroducing Mysql Ansible Role 
+## Indroducing Mysql Ansible Role ##
+
 Here I am going to implement mysql role downloaded ansibel galaxy
 run the command `ansible-galaxy install geerlingguy.mysql`. Once downloaded, rename the folder to `mysql`
 `sudo mv geerlingguy.mysql mysql`
@@ -256,15 +274,14 @@ Implementing mysql role for tooling website:
 MySQL role is going to install and configure MySQL database on the Target host.
 
 1. Install MySQL and other packages.
-
 2. Start the MySQL service and enable it to start at boot.
-
 3. Set the MySQL  password.
 4. Create a database for tooling.
 5 .Create a database user for tooling 
 We are going to template the `tooling_db.sql file` for mysql becasue we need to use it to load the data initial data. However we dont need to put any variable inside the file since it will load directelcy as it is.
 We are going to use the ansible mysql module for the create and insert module
-#### Indroducing  Nginx Role 
+
+#### Indroducing  Nginx Role #### 
 
 ### Indroducing  apache role Role 
 Apache role to install and configure Apache on the Target host. This playbook will do the following things:
@@ -319,13 +336,13 @@ To install a list of plugins, you may do this:
 update "site.yml" file and import playbook "jenkins.yml" and "java.yml" files, which will call for "jenkins" role and java role respectively
  on the browser and accessing jenkins by "public ip:8080"
 
- ![](./images/images_plugin_blueocean.png)
+ ![](./images/images_plugin_blueocean.PNG)
 
- ![](./images/pipeline-jenkins.png)
+ ![](./images/pipeline-jenkins.PNG)
 
 we can see  "open blue ocean" plugin installed
 
-### Indroducing Nginx as a load balancer
+#### Indroducing Nginx as a load balancer ####
 
 
-### Submitted the solution for review and feedback. Thank you ##
+#### Submitted the solution for review and feedback.Thank you ####
