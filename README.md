@@ -456,255 +456,308 @@ main.yml
    - restart nginx
 
  ```
- `install-packages.yml`
 
- ---
-    - name: install necessary packages
-    package: name={{item}} update_cache=yes state=present
-    with_items:
-    - epel-release
-    - nginx
-    - git
-    - php
-    - php-gd
-    - php-mysqli
-     notify:
-   - start nginx 
 
-  
-
-   `main.yml`
-
-   ``` ---
-   # tasks file for nginx
-   - include_tasks: install-packages.yml
-   - include_tasks: configure_nginx.yml
-   # - include_tasks: setup-ssl.yml
-   #   when: ansible_os_family == 'RedHat'
-   # - include_tasks: auto-RenewalCron.yml
-
-  under templates we have two jinga2 file for nginx configuration
+`install-packages.yml`
  
- `nginx-configuration.j2`
-  
-   server {
-        listen       80;
-        server_name  {{ server_name }};
-        root         {{ tooling_root_dir }};
-        index        login.php index.htm;
-        # Load configuration files for the default server block.
-        include /etc/nginx/default.d/*.conf;
-        location / {
-        }
-        error_page 404 /404.html;
-            location = /40x.html {
-        }
-        error_page 500 502 503 504 /50x.html;
-        }
-# Settings for a TLS enabled server.
-
-     server {
-         listen  443 ssl http2;
-
-         server_name  sikisharm.ml;
-         root         /var/www/html/tooling/html;
-         index       login.php;
-
-         ssl_certificate /etc/letsencrypt/live/sikisharm.ml/fullchain.pem; # managed by Certbot
-         ssl_certificate_key /etc/letsencrypt/live/sikisharm.ml/privkey.pem; # managed by Certbot
-         include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-         ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+    ---
+    - name: install necessary packages
+      package: name={{item}} update_cache=yes state=present
+      with_items:
+      - epel-release
+      - nginx
+      - git
+      - php
+      - php-gd
+      - php-mysqli
+      notify:
+      - start nginx 
 
 
+`setup-ssl.yml`
+
+    ---
+    - name: Install Python Package
+      yum: name=python3 update_cache=yes state=latest
+
+     #   - name: Enable EPEL Repository on CentOS 8
+     #   dnf: name=epel-release update_cache=yes state=latest
+
+     # - name: install certbot
+     #   yum: name=certbot update_cache=yes state=present
+
+     - name : Install Let's Encrypt Package
+     yum: name={{ certbot_package }} update_cache=yes state=latest
+ 
+     # # free-form (string) arguments, some arguments on separate lines with the 'args' keyword
+      # # 'args' is a task keyword, passed at the same level as the module
+      # - name: Run command if /path/to/database does not exist (with 'args' keyword)
+      #   command: /usr/bin/make_database.sh db_user db_name
+      #   args:
+      #     creates: /path/to/database
 
 
+      - name: Create and Install Cert 
+      command: "certbot --{{ certbot_plugin }} -d  {{ server_name }} -m {{ certbot_mail_address }} --agree-tos    --    noninteractive --redirect"
+      #   # args:
+      #   #   creates: /path/to/database
 
 
-         # Load configuration files for the default server block.
-         include /etc/nginx/default.d/*.conf;
+`main.yml`
 
-         location / {
-         }
-
-         error_page 404 /404.html;
-         location = /404.html {
-         }
-
-         error_page 500 502 503 504 /50x.html;
-        location = /50x.html {
-        }
-
-
- }
-
-upstream backend  {
-  server sikisharm.ml;
-}
-
- server {
-  location / {
-    proxy_pass  http://backend;
-  }
-}
+    ---
+    # tasks file for nginx
+    - include_tasks: install-packages.yml
+    - include_tasks: configure_nginx.yml
+    - include_tasks: setup-ssl.yml
+      when: ansible_os_family == 'RedHat'
+    - include_tasks: auto-RenewalCron.yml
 
 
 
-
-
- `nginx-tooling.j2`
-  
-  # For more information on configuration, see:
-#   * Official English Documentation: http://nginx.org/en/docs/
-#   * Official Russian Documentation: http://nginx.org/ru/docs/
-
-user nginx;
-worker_processes auto;
-error_log /var/log/nginx/error.log;
-pid /run/nginx.pid;
-
-# Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
-include /usr/share/nginx/modules/*.conf;
-
-events {
-    worker_connections 1024;
-}
-
-http {
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
-
-    access_log  /var/log/nginx/access.log  main;
-
-    sendfile            on;
-    tcp_nopush          on;
-    tcp_nodelay         on;
-    keepalive_timeout   65;
-    types_hash_max_size 2048;
-
-    include             /etc/nginx/mime.types;
-    default_type        application/octet-stream;
-
-    # Load modular configuration files from the /etc/nginx/conf.d directory.
-    # See http://nginx.org/en/docs/ngx_core_module.html#include
-    # for more information.
-    include /etc/nginx/conf.d/*.conf;
-
-    server {
-        listen       80 default_server;
-        listen       [::]:80 default_server;
-        server_name  18.212.192.154;
-        root         /usr/share/nginx/html;
-# Load configuration files for the default server block.
-        include /etc/nginx/default.d/*.conf;
-
-        location / {
-        }
-
-        error_page 404 /404.html;
-        location = /404.html {
-        }
-
-        error_page 500 502 503 504 /50x.html;
-        location = /50x.html {
-        }
-    }
-
-
-# Settings for a TLS enabled server.
-#
-#    server {
-#        listen       443 ssl http2 default_server;
-#        listen       [::]:443 ssl http2 default_server;
-#        server_name  _;
-#        root         /usr/share/nginx/html;
-#
-#        ssl_certificate "/etc/pki/nginx/server.crt";
-#        ssl_certificate_key "/etc/pki/nginx/private/server.key";
-#        ssl_session_cache shared:SSL:1m;
-#        ssl_session_timeout  10m;
-#        ssl_ciphers HIGH:!aNULL:!MD5;
-#        ssl_prefer_server_ciphers on;
-#
-#        # Load configuration files for the default server block.
-#        include /etc/nginx/default.d/*.conf;
-#
-#        location / {
-#        }
-#
-#        error_page 404 /404.html;
-#        location = /404.html {
-#        }
-#
-#        error_page 500 502 503 504 /50x.html;
-#        location = /50x.html {
-#        }
-#    }
-     include /etc/nginx/sites-enabled/*.conf;
-
-}
-
-
-## Indroducing  Apache role Role ## 
-Apache role to install and configure Apache on the Target host. This playbook will do the following things:
-
-Install the Apache package.
+## Introducing  Ansible Apache Role ## 
+This role is downloaded from ansible glaxy from geerlingguy 
+Apache role will install and configure Apache on the Target host. 
 Start the Apache service and enable it to start at boot.
-Create an Apache web root directory.
 Copy the Apache virtual host configuration template file from the Ansible control machine to the Ansible Target host.
+
+ `ansible-galaxy install geerlingguy.apache`
+ `sudo mv geerlingguy.apache apache`
+
+`configure-apache.yml`
+
+
+
+        ---
+        - name: clone tooling website from github
+        git:
+        repo: https://github.com/darey-io/tooling.git
+        dest: /var/www/html/tooling
+        clone: yes
+        force: yes
+
+        - name: Creating sites-available directory on host for httpd
+        file:
+        path: /etc/httpd/{{ item }}
+        state: directory
+        mode: '0755'
+        with_items:
+          - sites-available
+          - sites-enabled
+
+
+        - name: update main httpd configuation file
+        template:
+        src: centos-config.j2
+        dest: "/etc/httpd/conf/httpd.conf"
+        force: yes
+        notify:
+        - restart apache
+
+        - name: Set up Apache virtuahHost
+        template:
+        src: tooling-config.j2
+        dest: /etc/httpd/sites-available/{{ http_host }}.conf
+   
+        - name: Enable tooling website
+        file:
+        src: "/etc/httpd/sites-available/{{ http_host }}.conf"
+        dest: "/etc/httpd/sites-enabled/{{ http_host }}.conf"
+        state: link
+        force: yes
+        notify:
+        - restart apache
+
+        - name: de-activate default httpd page
+        file:
+        path: /etc/httpd/conf.d/welcome.conf
+        mode: '0755'
+        state: absent
+        notify:
+        - restart apache
+
+        # - name: Add enabled Nginx site to /etc/hosts
+        #   lineinfile:
+        #     dest: /etc/hosts
+        #     regexp: "127.0.0.1"
+        #     line: "35.222.190.156 {{ server_name }}"
+
+Templating the configuration file 
+`centos-config.j2`
+
+    ServerRoot "/etc/httpd"
+    Listen 80
+    Include conf.modules.d/*.conf
+    User apache
+    Group apache
+    ServerAdmin root@localhost
+      <Directory />
+      AllowOverride none
+      Require all denied
+      </Directory>
+      DocumentRoot "/var/www/html"
+
+      <Directory "/var/www">
+      AllowOverride None
+      Require all granted
+      </Directory>
+      <Directory "/var/www/html">
+      Options Indexes FollowSymLinks
+      AllowOverride None
+      Require all granted
+      </Directory>
+      <IfModule dir_module>
+      DirectoryIndex index.html 
+      </IfModule>
+      <Files ".ht*">
+      Require all denied
+      </Files>
+      ErrorLog "logs/error_log"
+      LogLevel warn
+      <IfModule log_config_module>
+      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+      LogFormat "%h %l %u %t \"%r\" %>s %b" common
+      <IfModule logio_module>
+      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+      </IfModule>
+      CustomLog "logs/access_log" combined
+      </IfModule>
+      <IfModule alias_module>
+      ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+      </IfModule>
+
+    <Directory "/var/www/cgi-bin">
+    AllowOverride None
+    Options None
+    Require all granted
+    </Directory>
+    <IfModule mime_module>
+    TypesConfig /etc/mime.types
+    AddType application/x-compress .Z
+    AddType application/x-gzip .gz .tgz
+    AddType text/html .shtml
+    AddOutputFilter INCLUDES .shtml
+
+    </IfModule>
+    AddDefaultCharset UTF-8
+
+    <IfModule mime_magic_module>
+     MIMEMagicFile conf/magic
+    </IfModule>
+    EnableSendfile on
+    <IfModule mod_http2.c>
+    Protocols h2 h2c http/1.1
+    </IfModule>
+    IncludeOptional conf.d/*.conf
+    IncludeOptional sites-enabled/*.conf
+
+
+`tooling-config.j2`
+
+    <VirtualHost *:{{ http_port }}>
+      ServerAdmin webmaster@{{ http_host }}
+      ServerName {{ http_host }}
+      ServerAlias www.{{ http_host }}/tooling/html
+      DocumentRoot /var/www/{{ http_host }}/tooling/html
+   
+
+      <Directory /var/www/{{ http_host }}/tooling/html>
+       Options -Indexes
+      </Directory>
+
+      <IfModule mod_dir.c>
+       DirectoryIndex index.php index.html index.cgi index.pl  index.xhtml index.htm
+      </IfModule>
+
+    </VirtualHost>
+
 
 ## Indroducing Java and Jenkins Role ## 
 Lets install Jenkins role from the Ansible community
-Run the command below to install an Ansible Role for Jenkins
-ansible-galaxy install geerlingguy.jenkins
-
 Since Jenkins require JAVA to work, lets install Java Role first before we install Jenkins role
-ansible-galaxy install geerlingguy.java
-Lets rename to java >> sudo mv geerlingguy.java java
-Similarly, we install jenkins role   ansible-galaxy install geerlingguy.jenkins
- 
-ansible-galaxy install geerlingguy.jenkins and rename it 
 
+ `ansible-galaxy install geerlingguy.jenkins`
+  `sudo mv geerlingguy.java java`
+Similarly, we install jenkins role, Run the command below to install an Ansible Role for Jenkins
 
+`ansible-galaxy install geerlingguy.jenkins`
+`sudo mv geerlingguy.jenkins jenkins`
 Now we have the Java and Jenkins roles are install, let import the jenkins.yml and java.yml file in the site.yml
+update "site.yml" file and import playbook "jenkins.yml" and "java.yml" files, which will call for "jenkins" role and java role respectively
 
-Jenkins role:
+  on our Jenkins role: `deafault/main.yml`
 
-deafault/main.yml
+  To install the list of plugins
 
-To install the list of plugins
-
-jenkins_plugins:
+  jenkins_plugins:
   - git
   - maven-plugin
-or
 
-jenkins_plugins: [git, maven-plugin]
+  Alternatively:
+
+  jenkins_plugins: [git, maven-plugin]
 
 -----------------------------------------------------------------------------------------
 To install a list of plugins, you may do this:
 
-- name: Install Jenkins plugins
-  jenkins_plugin:
+    - name: Install Jenkins plugins
+    jenkins_plugin:
     name: "{{ item }}"
     jenkins_home: "{{ jenkins_home_directory }}"
     url_username: "admin_username"
     url_password: "admin_password"
     state: present
     with_dependencies: yes
-  with_items:
+    with_items:
     - git
     - maven
-update "site.yml" file and import playbook "jenkins.yml" and "java.yml" files, which will call for "jenkins" role and java role respectively
- on the browser and accessing jenkins by "public ip:8080"
+
+ Lets check the jenkins installation on browser "public ip:8080" and verify `blue ocean` plugin installed
+
 
  ![](./images/images_plugin_blueocean.PNG)
 
  ![](./images/pipeline-jenkins.PNG)
 
-we can see  "open blue ocean" plugin installed
 
 #### Indroducing Nginx as a load balancer ####
 
+HAProxy is free, open source, highly available, load balancer software written by Willy Tarreau in 2000. 
+It supports both Layer 4 (TCP) and Layer 7 (HTTP) based application load balancing
+The HAproxy role is going to Installing and Configuring HAProxy Server on CentOS 8
+  - Setting Up HAProxy Logging
+  - Configuring HAProxy Front-end and Back-ends
 
-#### Submitted the solution for review and feedback.Thank you ####
+
+  Creating  HAProxy-nginx role 
+     on `handlers/main.yml`
+          ---
+          - name: start haproxy service
+            service: name=haproxy state=started
+
+          - name: lb restart
+            service: name=haproxy state=restarted
+
+          - name: restart rsyslog
+            service: name=rsyslog state=restarted
+
+on the `tasks/main.yml`
+
+      - name: upadte /etc/hosts file for load balancer
+      lineinfile:
+      dest: /etc/hosts
+      regexp: "127.0.0.1"
+      line: "18.234.60.170 {{ server_name }}"
+      notify:
+      - restart nginx
+
+      - name: upadte /etc/hosts file webserver
+      lineinfile:
+      dest: /etc/hosts
+      regexp: "127.0.0.1"
+      line: "18.234.60.170 {{ server_name }}"
+      notify:
+      - restart nginx
+-----------------------------------------------------------------
+
+##### Submitted the solution for review and feedback.Thank you !!! #####
