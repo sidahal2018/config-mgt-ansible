@@ -334,8 +334,21 @@ on the mysql roles under tasks folder create load-mysql.yml file and add the fol
   tags:
     - restore_db
 
-
 ```
+
+Verifing by connecting to mysql Database
+Now logining to the credentials we have created
+
+`mysql -u siki -p`
+
+Enter password: 
+For remote login we use the following:
+
+`mysql -h 35.232.163.181 -u siki -p`
+
+
+![](./images/mysql-query.PNG)
+We are successfuly able to loginto the user name and password we have created
 
 ## Introducing Nginx Ansible Role ##
 
@@ -513,7 +526,34 @@ main.yml
       when: ansible_os_family == 'RedHat'
     - include_tasks: auto-RenewalCron.yml
 
+we are going to verify nginx renders the tooling website correctly
 
+Create/Update DNS Record
+----------------------------------
+I have domain from the freenom, I am going to update the DNS record. 
+Lets domain registrar i.e freenom for my case and create an A/CNAME record for your domain. Ex:sikisharm.ml
+
+Login into your  Freenom account.
+Naviate to services and click on mydomain as shown below:
+
+![](./images/Manage-domain.PNG)
+![](./images/Manage-Dns.PNG)
+![](./images/update-records.PNG)
+
+Wait for some time to let the record propagate.
+Check the DNS propagation using Nslookup 
+`yum install -y bind-utils utility`
+
+Verify Let’s Encrypt Certificate
+-------------------------------
+Verify the Let’s Encrypt certificate by visiting the HTTPS version of your website.
+
+https://your-https-web-site
+You should now get an HTTPS version of your site.
+
+![](./images/runtheplaybook.PNG)
+
+![](./images/SSL-certificate.PNG)
 
 ## Introducing  Ansible Apache Role ## 
 This role is downloaded from ansible glaxy from geerlingguy 
