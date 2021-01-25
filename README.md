@@ -181,18 +181,18 @@ load_balancer_is_required: true
 
 To test this, you will need to have another set of servers, update inventory for each environment, and run Ansible by specifying the respective environment. (If your laptop resources cannot accomodate more virtual servers, you can use AWS to create virtual servers in the cloud. [here is how to get AWS VMs](https://www.youtube.com/watch?v=xxKuB9kJoYM&list=PLtPuNR8I4TvkwU7Zu0l0G_uwtSUXLckvh&index=6)
 
-## Lets get started with documenting project-13 solution as below ##
+## Below steps shows project-13 solution documentation ##
 
 ### Prepare Remote Source Repository Gitlab or GitHub ###
 1. Login to your Gitlab account.
 2. Create a new repository and name it "pbl".
 
-### - Setting up Infrastructure ###
+### Setting up Infrastructure ###
 
 1. Login into your GCP account.
-2. Create Centos8 Control Machine
-3. Login in to the control machine 
-4. Create directoy to store all our ansible file 
+2. Create Centos8 Control Machine and other target hosts such as webserver, database,Load Balancer, Jenkins and so on.
+3. SSH into the control machine 
+4. Create directory named `Ansible` to store all our ansible work
 5. Installing ansible on control machine.
 ```
    sudo yum epel-release
@@ -210,17 +210,17 @@ Ansible can be installed with pip, the Python package manager. If pip isn’t al
 ```
 
 
-7. upgrading python to 2.9 to 2.10.14
+7. Upgrading python to 2.9 to 2.10.14
 
 If you have Ansible 2.9 or older installed, you need to use pip uninstall ansible first to remove older versions of Ansible before re-installing it.
 
-8. first we check pip and uninstall ansible
+8. First checking pip and uninstalling ansible
  ```
-   which pip3
+   which pip
    pip3 uninstall ansible
 ```
 
-9. installing ansible with pip:
+9. Installing ansible with pip:
 
  ```
    pip3 install ansible
@@ -229,11 +229,11 @@ If you have Ansible 2.9 or older installed, you need to use pip uninstall ansibl
 10. Clone the gitlab url
 
 #### To connect to Remote servers ####
-Gennerate ssh keys and copy it to remote servers
+Generate ssh keys and copy it to remote servers
+* `ssh-keygen`
+* `ssh-copy-id -i .ssh/id_rsa.pub root@54.147.121.140`
 
-`ssh-copy-id -i .ssh/id_rsa.pub root@54.147.121.140`
-
-#### On remote servers update ####
+#### Upon Permission denied issue, perform the follwoing on remote servers ####
 
 * `sudo su`
 * `passwd`
@@ -247,22 +247,32 @@ Gennerate ssh keys and copy it to remote servers
 * `systemctl restart sshd`
 * `systemctl status sshd`
 
-Ansible uses a configuration file to customize settings. The file is ansible.cfg file. It can be located anywhere. We just need to export an environmetal variable to let Ansible know where to find this file.
+Ansible uses a configuration file to customize settings. The file is `ansible.cfg` file. It can be located anywhere. We just need to export an environmetal variable to let Ansible know where to find this file.  Create a new file and name it ansible.cfg . Update it with the below content
+```
+ [defaults]
+timeout = 160
+roles_path =/home/sidahal2018/Ansible/roles
+callback_whitelist = profile_tasks
+log_path=~/ansible.log
+host_key_checking = False
+gathering = smart
 
-Create a new file and name it ansible.cfg . Update it with the below content, and specify the full path to your roles. If you do not do this, any Role you download through galaxy will be installed in the default settings which could either be in /etc/ansible/ansible.cfg or ~/.ansible.cfg
+[ssh_connection]
+ssh_args = -o ControlMaster=auto -o ControlPersist=30m -o ControlPath=/tmp/ansible-ssh-%h-%p-%r -o ServerAliveInterval=60 -o ServerAliveCountMax=60
 
-Run the export command on the terminal to let Ansible know where to find the configuration file. export ANSIBLE_CONFIG=<FULL PATH TO YOUR ansible.cfg File
+```
 
-exporting my config file only persists for one session, typically a shell script is used in a work environment.
-Run the export command on the terminal to let Ansible know where to find the configuration file.
+we specify the full path to your roles. If you do not do this, any role you download through galaxy will be installed in the default settings which could either be in `/etc/ansible/ansible.cfg or ~/.ansible.cfg`
 
-export ANSIBLE_CONFIG=<FULL PATH TO YOUR ansible.cfg File
+Run the export command on the terminal to let Ansible know where to find the configuration file. export ANSIBLE_CONFIG=<FULL PATH TO YOUR ansible.cfg File>
 
-export ANSIBLE_CONFIG=/home/sidahal2018/Ansible/ansible.cfg
+Exporting my config file only persists for one session, typically a shell script is used in a work environment.
+Export environment variable everytime or we can put in the bash_rc `~/.bash_rc`
 
-We can search environment
+`export ANSIBLE_CONFIG=/home/sidahal2018/Ansible/ansible.cfg`
 
- env | grep ANSIBLE   
+We can search environment using the below command 
+ `env | grep ANSIBLE`   
 
 
 ## Introducing Mysql Ansible Role ##
@@ -289,13 +299,16 @@ On mysql role, using `defaults/main.yml` to define the variable, add the followi
   tooling_db_name: "tooling_db"
 
 ```
-We are going to template the `tooling_db.sql file` for mysql becasue we need to use it to load the data initial data. However we dont need to put any variable inside the file since it will load directly as it is on gthe script
-We are going to use the ansible mysql module for the create and insert module
+We are going to template the `tooling_db.sql file` for mysql becasue we need to use it to load the data initial data. However we dont need to put any variable inside the file since it will load directly as it is on the script
+We are going to use the ansible mysql module for the create and insert statements
 
- mkdir files
- create `tooling_db.sql file and paste the tooling_db.sql script 
+```
+   We create new directory called files.Inside the files directory we reate tooling_db.sql 
+   file copy and paste the tooling_db.sql scripts
 
-on the mysql roles under tasks folder create load-mysql.yml file and add the following tasks
+```
+
+On our mysql roles, under tasks folder create `load-mysql.yml` file and add the following tasks:
 
 
 ```
@@ -526,12 +539,44 @@ main.yml
       when: ansible_os_family == 'RedHat'
     - include_tasks: auto-RenewalCron.yml
 
-we are going to verify nginx renders the tooling website correctly
+
+Nginx configuration file should like the below :
+
+
+      server {
+        server_name  sikisharm.ml;
+        root         /var/www/html/tooling/html;
+        index        login.php index.htm;
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+        location / {
+        }
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+        error_page 500 502 503 504 /50x.html;
+      listen 443 ssl; # managed by Certbot
+      ssl_certificate /etc/letsencrypt/live/sikisharm.ml/fullchain.pem; # managed by Certbot
+      ssl_certificate_key /etc/letsencrypt/live/sikisharm.ml/privkey.pem; # managed by Certbot
+      include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+      ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+      }
+      server {
+      if ($host = sikisharm.ml) {
+        return 301 https://$host$request_uri;
+      } # managed by Certbot
+        listen       80;
+        server_name  sikisharm.ml;
+      return 404; # managed by Certbot
+      }
+                                                        
+
+Let's verify nginx rendering the tooling website page correctly or not
 
 Create/Update DNS Record
 ----------------------------------
 I have domain from the freenom, I am going to update the DNS record. 
-Lets domain registrar i.e freenom for my case and create an A/CNAME record for your domain. Ex:sikisharm.ml
+create an A/CNAME record for my domain- sikisharm.ml
 
 Login into your  Freenom account.
 Naviate to services and click on mydomain as shown below:
@@ -544,14 +589,20 @@ Wait for some time to let the record propagate.
 Check the DNS propagation using Nslookup 
 `yum install -y bind-utils utility`
 
+Run the playbooks
+-------------------------------
+`sudo ansible-playbook -i ../inventory/dev site.yml`
+
+![](./images/runtheplaybook.PNG)
+
 Verify Let’s Encrypt Certificate
 -------------------------------
 Verify the Let’s Encrypt certificate by visiting the HTTPS version of your website.
 
-https://your-https-web-site
+https://sikisharm.ml
+
 You should now get an HTTPS version of your site.
 
-![](./images/runtheplaybook.PNG)
 
 ![](./images/SSL-certificate.PNG)
 
@@ -753,7 +804,9 @@ To install a list of plugins, you may do this:
     - maven
 
  Lets check the jenkins installation on browser "public ip:8080" and verify `blue ocean` plugin installed
-
+  To check Jenkins is installed or not
+  `sudo service jenkins status/start/restart`
+  `chkconfig jenkins on` >> enabled on reboot, jenkins will start automatically
 
  ![](./images/images_plugin_blueocean.PNG)
 
