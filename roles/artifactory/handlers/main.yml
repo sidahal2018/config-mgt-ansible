@@ -1,0 +1,9 @@
+---
+# handlers file for artifactory
+
+- name: start and enable artifactory
+  service:
+    name: artifactory
+    state: started
+    enabled: yes
+

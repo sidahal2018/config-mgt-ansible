@@ -1,856 +1,327 @@
-# Ansible Dynamic Assignments (Include) and Community Roles
 
+## Experience Continous Integration With Jenkins | Ansible | Artifactory | Sonarqube | PHP ##
 
-We will introduce dynamic assignments using Ansible's `include` module
+WARNING! - This project has a bit of initial theoretical concepts. PLEASE READ! If you need to, READ AGAIN! until it sinks in. It is one of the most important and fundamental concept in DevOps.
 
-Now you may be wondering, what is the difference between static and dynamic assignments? And why do they matter?
+In the past, you have been working on Linux and Ansible and just a basic overview with hands on Jenkins. Here, there is a lot to understand and do. Therefore, there will be a bit of theory at the start. But trust me, it is all worth it. This will set the stage for you to truly understand why you need to build and configure the things that will be happening in this project.
 
-Well, from [project12](https://professional-pbl.darey.io/en/latest/project12.html), you can tell already that static assignments makes use of the `import` Ansible module. The module that enables dynamic assignments is `include`
+In previous project, you deployed the tooling website directly into the /var/www/html folder on the dev server. Well, even though that worked, and we are still able to access the website, it is not the best way to go. In the real world, most application code like java .net etc are usually compiled and built to create an executable file. The executable file such as jar file in the case of java will contain all the code embeded, and the necessary library dependencies in which the application needs to run and work successfully. Some other programs like PHP work directly without building into some executable file. That is why we could easily deploy the entire code from git into var/www/html and immediately the webserver is able to render the pages on the browser. However, it is not ideal to download code directly from git on to our servers. There should be a smarter way to package the entire application code, and track the release versions. We cna package the entire code and all its dependencies into some form like .tar.gz or .zip so that it can be easily unpacked on the respective environment’s servers.
 
-Hence,
+In this project, you will understand and get hands on experience around the entire concept around CI/CD from applications perspective. To fully gain real expertise around this idea, it is best to see it in action across different programming languages and from the platform perspective too. From the application perspective, we will be focusing on PHP here; There are more projects ahead that are based on Java, NODEJS, .Net and Python. By the time you start working on Terraform, Docker and Kubernetes projects, you will get to see the platform perspective of CI/CD in action.
 
-```
-import = Static
-include = Dynamic
-```
+What is Continous Integration
+In software engineering, continuous integration (CI) is the practice of merging all developers’ working copies to a shared mainline (Git Repository) several times a day. This means multiple git commit, several times everyday.
 
+The general idea behind multiple commits is to avoid what is generally considered as Merge Hell or Integration hell. When a new developer joins a new project, he will have to create a copy of the main codebase by creating a new git feature branch from the mainline. In some organization or team, this could be the develop, main or master branch to develop his own features. If there are tens of developers working on the project, they will all do the same thing. Which is the case in the real world. Some projects even have hundreds of developers working on the same solution. Maybe a mobile application, website or a web app. As each developer work on their own feature branch, the main branch they took a copy from will start drifting away. If this linger on for a very long time without re-conciling the code, then this will cause a lot of code conflict or Merge Hell as rightly said. Imagine such a hell from tens of developers or worse, hundreds. So the best thing to do, is to continously commit code to the mainline. As many times as tens of times per day. With this practice, you can avoid Merge Hell or Integration hell
 
-When the **import** module is used, all statements are pre-processed at the time playbooks are parsed. Meaning, when you execute `ansible-playbook site.yml`, Ansible will process all the playbooks referenced during the time it is parsing the statements. This also means that, during actual execution, if any statement changes, such statements will not be considered. Hence, it is static.
+CI concept does not really end at just commiting your code. There is a general workflow. Lets start exploring the flow…
 
-(***Parsing means analyzing the texts, syntax, strings in the file in order to understand what to do with it***). 
+Run tests locally: Before developers commit their code to the central repository (Git repository), it is best practice to test the code locally before commit. So, test-driven development is used in combination with CI. Developers will write tests for their code called unit-tests, and before they commit their work, they will use some tools to run their tests locally. This practice helps the team to avoid having developer’s work-in-progress code from breaking other developer’s copy of the code-base.
 
-On the other hand, when **include** module is used, all statements are processed only during execution of the playbook. Meaning, after the statements are **parsed**, any changes to the statements encountered during execution will be used. 
+Compile code in CI: After testing the code locally, developers will commit and push their work to GIT. Rather than building the code into an executable locally, a dedicated server for CI will pick up the code and run the build there. For the sake of this particular project, we will use Jenkins as our CI server. This happens either periodically by polling the repository at every X mins/hours configured, or after every commit. Having a CI server where this build runs is a good practice for the team as everyone will have visibility into each commit and its corresponding build.
 
+Run further tests in CI: Even though tests have been ran locally by developers, it is important to also run the unit-tests on the CI server as part of the continous process. But, rather than focusing solely on unit-tests, there are other kinds of tests and code analysis thay can be done using the CI server. These are very critical to determining the overall quality of code being developed, how it interact with other developers work, and how less vulnerable it is to attacks. The CI server uses different tools for Static Code Analysis, Code Coverage Analysis, Code smells Analysis, and Compliance Analysis. In addition, it runs other tests such as Integration, and Penetration tests. Other tasks perfomed on the CI server include producing code documentation from the source code, and facilitate manual quality assurance (QA) testing processes.
 
-Take note that it is always prefered to use static assignments for playbooks, because it is more reliable. With dynamic, it is hard to debug playbook problems due to its dynamic nature. However, you can use dynamic assignments for environment specific variables as we will be introducing in this project.
+Deploy an artifact from CI: At this stage, the difference between CI and CD is spelt out. As you now know, CI is Continous Integration, which is everything we have been discussing thus far. CD on the otherhand is Continous Delivery which ensures that software checked into the mainline is always ready to be deployed to users. The deployment here is manually triggered after certain QA tasks is completely satisfactory. There is another CD known as Continous Deployment which is also about deploying the software to the users, but rather than manual, it makes the entire process fully automated.
 
-##### Introducing Dynamic Assignment Into Our structure
 
-Create another folder and name it `dynamic-assignments`. Then inside that folder, create a new file and name it `env-vars.yml`. We will tell `site.yml` to `include` this playbook later. For now, lets keep building up the structure.
+Continous Integration In The Real World
+To emphasize a typical CI Pipeline further, Let us explore the diagram below a little deeper
 
 
-Your layout should now look like this.
+Picture
 
+Source: whitesourcesoftware
 
-```
-├── dynamic-assignments
-│   └── env-vars.yml
-├── inventory
-│   └── dev
-    └── stage
-    └── uat
-    └── prod
-└── playbooks
-    └── site.yml
-├── static-assignments
-│   └── common.yml
-```
+Version Control: This is the stage where developers’ code gets committed and pushed after they have tested their work locally.
 
+Build: Depending on the type of language or technology, we may need to packaged code dependencies and build to a computer language. Some languages like PHP or Javascript do not require to be built because they are scripting or interpreted languages. While languages such as Java, C, Golang, Scala, .Net, etc are compiled languages. Their syntax cannot be directly understood by the computer. They require the Build phase which means must be compiled to a binary file that can be understood by the computer. here is a good read to learn more about the differences between scripting and programming languages.
 
-Since we will be using the same Ansible to configure multiple environments, and each of these environments will have certain unique attributes. such as **servername**, **ip-address** etc. we will need a way to set values to variables per specific environment.
+Unit Test: Unit tests that have been developed by the developers are tested. Depending on how the CI job is configured, the entire pipeline may fail if part of the tests fail and developers will have to fix this failure before starting the pipeline again. A Job by the way, is a phase in the pipeline. Unit Test is a phase, therefore it can be considered a job on its own.
 
-For this reason, we will now create a folder to keep each environment's variables file. Therefore, create a new folder `env-vars`, then for each environment, create new **YAML** files which we will use to set variables.
+Deploy: Once the tests pass, the next phase is to deploy the compiled or packaged code into an environment a code repository. This is where all the various versions of code including the latest will be stored. The CI tool will have to pick up the code from this location to proceed with the remaining parts of the pipeline.
 
-Your layout should now look like this.
+Auto Test: Apart from Unit testing, there are many other kinds of tests that are required to analyse the quality of code, and determine how vulnerable the software will be to external or internal attacks. These tests must be automated, and there can be multiple environments created to fulfil different test requirements. For example, a server dedicated to Integration Testing will have the code deployed there to conduct integration tests. Once that passes, there can be othere sub layers in the testing phase in which the code will be deployed to so as to conduct further tests. Such are User Acceptance Testing (UAT), and another can be Penetration Testing. These servers will be named according to what they have been designed to do in those environments. A UAT server is generally be used for UAT, SIT server is for Systems Integration Testing, PEN Server is for Penetration Testing and they can be named whatever the naming style or convention in which the team has adopted. An environment does not necessarily have to be one single server. It will in most cases be a stack as you have defined in your Ansible Inventory. All the servers in the inventory/dev are considered Dev Environment. The same goes for inventory/stage (Staging Environment) inventory/preprod (Pre-production environment), inventory/prod (Production environment) etc. So its all down to naming convention as agreed and used company or team wide.
 
-```
-├── dynamic-assignments
-│   └── env-vars.yml
-├── env-vars
-│   └── dev.yml
-    └── stage.yml
-    └── uat.yml
-    └── prod.yml
-├── inventory
-│   └── dev
-    └── stage
-    └── uat
-    └── prod
-└── playbooks
-    └── site.yml
-├── static-assignments
-│   └── common.yml
-    └── webservers.yml
-```
+Deploy to production: Once all the tests have been conducted and either the release manager or whoever has the authority to authorize the release to the production server is happy, he gives the green light to hit the deploy button to production. This is an Ideal Continous Delivery Pipeline. If the entire pipeline was automated and no human is required to manually give the Go decision, then this would be considered Continous Deployment. Because the cycle will be repeated, and everytime there is a code commit and push, it causes the pipeline to trigger and the loop continues over and over.
 
-Now paste the instruction below into the `env-vars.yml` file.
+Measure And Validate: This is where live users are interating with the application and feedback is being gathered for improvement and bug fixes. There are many metrics that must be determined and observed here. We will quickly go through 15 metrics that MUST be considered.
 
-```
----
-- name: collate variables from env specific file, if it exists
-  include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ playbook_dir }}/../env_vars/{{ "{{ inventory_file }}.yml"
-    - "{{ playbook_dir }}/../env_vars/default.yml"
-  tags:
-    - always
-```
+Common Best Practices of CI/CD
+Maintain a code repository
 
-Notice 3 things here;
+Automate the build
 
-1. We used `include_vars` instead of `include`. That is because the developers of Ansible decided to separate the different possibilities on the module. From Ansible version 2.8, the `include` module will be deprecated and variants of `include` must be used. These are `include_tasks` `include_role` `include_vars`. In the same verin, **import** also has its variants such as the `import_playbook`, and `import_tasks` 
-2. We made use of a [special variables](https://docs.ansible.com/ansible/latest/reference_appendices/special_variables.html) `{{ playbook_dir }}` and `{{ inventory_file }}`. `{{ playbook_dir }}` will help Ansible to determine the location of the running playbook, and from there navigate to other path on the filesystem. `{{ inventory_file }}` on the other hand will dynamically resolve to the name of the inventory file being used, then append `.yml` so that it picks up the required file within the `env-vars` folder.
-3. We are including the variables using a loop. `with_first_found` implies that, looping through the list of files, the first one found is used. This is good so that we can always set default values in case an environment specific env file does not exist.
+Make the build self-testing
 
+Everyone commits to the baseline every day
 
-### Update site.yml with dynamic assignments
+Every commit (to baseline) should be built
 
-Update the `site.yml` file to make use of the dynamic assignment. (*At this point, we cannot test it yet. We are just setting the stage for what is yet to come. So hang on to your hats*)
+Every bug-fix commit should come with a test case
 
+Keep the build fast
 
-**site.yml** should now look like this.
-```
----
-- name: Include dynamic variables 
-  hosts: all
-  tasks:
-    - import_playbook: ../static-assignments/common.yml 
-    - include_playbook: ../dynamic-assignments/env-vars.yml
-  tags:
-    - always
+Test in a clone of the production environment
 
-- name: Webserver assignment
-  hosts: webservers
-    - import_playbook: ../static-assignments/webservers.yml
+Make it easy to get the latest deliverables
 
-```
+Everyone can see the results of the latest build
 
-### Community Roles
+Automate deployment
 
-It is time to develop a role for MySQL database. This role should install the database, and configure its users. But why should we re-invent the wheel? There are tons of roles that have already been developed by other open source engineers out there. These roles are actually production ready, and dynamic to accomodate most linux flavours or environment. With Ansible Galaxy again, we can simply download a ready to use ansible role, and keep going.
+Why are we doing everything we are doing? - 13 DevOps Success Metrics
+At the end of it all, DevOps is all about continous delivery or deployment, and being able to ship out quality code as fast as possible. This is a very ambitious thing to desire, therefore we must be careful not to break things as we are moving very fast. By tracking these metrics, we can determine our delivery speed and bottle necks before breaking things. Ultimately, the goals of DevOps is Velocity, Quality, and Performance. But how do we track these? Let us have a look at the 13 metrics to watch out for.
 
-#### Downloading Mysql Ansible Role 
+1 Deployment frequency: Tracking how often you do deployments is a good DevOps metric. Ultimately, the goal is to do more smaller deployments as often as possible. Reducing the size of deployments makes it easier to test and release. I would suggest counting both production and non-production deployments separately. How often you deploy to QA or pre-production environments is also important. You need to deploy early and often in QA to ensure time for testing.
 
-You can browse the available community roles [here](https://galaxy.ansible.com/home)
+2 Lead time: If the goal is shipping code quickly, this is a really key DevOps metric. I would define lead time as the amount of time that occurs between starting on a work item until it is deployed. This helps you know that if you started on a new work item today, how long would it take on average until it gets to production
 
-We will be using one developed by `geerlingguy`. Within your roles folder, run the command `ansible-galaxy install geerlingguy.mysql`. Once downloaded, rename the folder to `mysql`
+3 Customer tickets: The best and worst indicator of application problems is customer support tickets and feedback. The last thing you want is for your users to find bugs or have problems with your software. Because of this, they also make a good indicator of application quality and performance problems.
 
-Read the `README.md` file, and ensure that it configures the usernmae you require for the `tooling` website.
+4 Percentage of automated tests pass: To increase velocity, it is highly recommended that the development team makes extensive usage of unit and functional testing. Since DevOps relies heavily on automation, tracking how well automated tests work is a good DevOps metrics. It is good to know how often code changes are causing tests to break.
 
+5 Defect escape rate: Do you know how many software defects are being found in production versus QA? If you want to ship code fast, you need to have confidence that you can find software defects before they get to production. Defect escape rate is a great DevOps metric to track how often those defects make it to production.
 
-#### Other Roles
+6 Availability: The last thing we ever want is for our application to be down. Depending on the type of application and how we deploy it, we may have a little downtime as part of scheduled maintenance. It is highly recommended to track this metric and all unplanned outages. Most software companies build status pages to track this. Such as this Google Products Status Page
 
-We need more roles for 
+7 Service level agreements: Most companies have some service level agreement (SLA) that they operate with. It is also important to track compliance with SLAs. Even if there are no formal SLA, there probably are application requirements or expectations to be achieved.
 
-1. Nginx
-2. Apache
-3. Jenkins
+8 Failed deployments: We all hope this never happens, but how often do our deployments cause an outage or major issues for our users? Reversing a failed deployment is something we never want to do, but it is something you should always plan for. If you have issues with failed deployments, be sure to track this metric over time. This could also be seen as tracking *Mean Time To Failure8 (MTTF).
 
-With your experience on Ansible so far. 
+9 Error rates: Tracking error rates within the application is super important. Not only are they an indicator of quality problems, but also ongoing performance and uptime related issues. In software development, errors are also known as exceptions, and good exception handling best practices are very critical. If these are not handled nicely, we can figure it out while monitoring the rate of errors.
 
-- Decide if you want to develop your own role, or find an available one from the community
-- Update both `static-assignment` and `site.yml` files to reflect all your work.
-- Configure letsencrypt as part of nginx role. [Here is a guide you can take inspiration from](https://linuxbuz.com/linuxhowto/install-letsencrypt-ssl-ansible)
+Bugs – Identify new exceptions being thrown in the code after a deployment
 
-***MUST READ HINTS***:
+Production issues – Capture issues with database connections, query timeouts, and other related issues.
 
-- Ensure that you put condition to enable either **Nginx** or **Apache** load balancers. You cannot install both on the same machine. 
-Follow the below guide to implement this use case
+Presenting error rate metrics like this simply gives greater insights into where to focus attention.
 
-  - Declare a variable in `defaults/main.yml` file inside the Nginx and Apache roles. Name each variable whatever you like. Something like 
- `enable_nginx_lb` and `enable_apache_lb` respectively. 
-  - Set both values to false like this `enable_nginx_lb: false`.
-  - Declare another variable in both roles `load_balancer_is_required` and set its value to false as well
-  - Update both assignment and site.yml files respectively
 
-`loadbalancers.yml` file
-```
-- hosts: lb
-  roles:
-    - { role: nginx, when: enable_nginx_lb and load_balancer_is_required }
-    - { role: apache, when: enable_apache_lb and load_balancer_is_required }
 
-```
 
-site.yml
-```
-     - name: Loadbalancers assignment
-       hosts: lb
-         - import_playbook: ../static-assignments/loadbalancers.yml
-        when: load_balancer_is_required 
-  ```
 
-Now we will make use of env-vars to determine if we want to use loadbalancers in a certain environment. Assuming we only want to use nginx loadbalancer in `stage` and `prod` environments. While in `dev` and `uat`, we do not intend to use load balancers.
 
-You will activate load balancer, and enable nginx by setting these in the respective environment's env-vars file. 
 
-```
-enable_nginx_lb: true
-load_balancer_is_required: true
-```
 
-To test this, you will need to have another set of servers, update inventory for each environment, and run Ansible by specifying the respective environment. (If your laptop resources cannot accomodate more virtual servers, you can use AWS to create virtual servers in the cloud. [here is how to get AWS VMs](https://www.youtube.com/watch?v=xxKuB9kJoYM&list=PLtPuNR8I4TvkwU7Zu0l0G_uwtSUXLckvh&index=6)
 
-## Below steps shows project-13 solution documentation ##
 
-### Prepare Remote Source Repository Gitlab or GitHub ###
-1. Login to your Gitlab account.
-2. Create a new repository and name it "pbl".
 
-### Setting up Infrastructure ###
 
-1. Login into your GCP account.
-2. Create Centos8 Control Machine and other target hosts such as webserver, database,Load Balancer, Jenkins and so on.
-3. SSH into the control machine 
-4. Create directory named `Ansible` to store all our ansible work
-5. Installing ansible on control machine.
-```
-   sudo yum epel-release
-   sudo yum install ansible
-```
+Ansible Inventory should look like this
+├── ci
+├── dev
+├── pentest
+├── pre-prod
+├── prod
+├── sit
+└── uat
 
-6. Installing Ansible with pip
 
-Ansible can be installed with pip, the Python package manager. If pip isn’t already available on your system of Python, run the following commands to install it:
 
-```
-   curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-   python get-pip.py --user
 
-```
 
 
-7. Upgrading python to 2.9 to 2.10.14
 
-If you have Ansible 2.9 or older installed, you need to use pip uninstall ansible first to remove older versions of Ansible before re-installing it.
 
-8. First checking pip and uninstalling ansible
- ```
-   which pip
-   pip3 uninstall ansible
-```
 
-9. Installing ansible with pip:
 
- ```
-   pip3 install ansible
-  
-```
-10. Clone the gitlab url
 
-#### To connect to Remote servers ####
-Generate ssh keys and copy it to remote servers
-* `ssh-keygen`
-* `ssh-copy-id -i .ssh/id_rsa.pub root@54.147.121.140`
 
-#### Upon Permission denied issue, perform the follwoing on remote servers ####
 
-* `sudo su`
-* `passwd`
-* `sudo nano /etc/ssh/sshd_config`
- ```
-   open port22
-   permitRootlogin yes
-   password authention yes
+Running Ansible Playbook From Jenkins
+Now that you have a broad overview of a typical Jenkins pipeline. Lets get the actual ansible deployment to work by
+
+Installing Ansible on Jenkins
+
+Installing Ansible plugin in Jenkins UI
+
+Starting the Jenkinsfile coding from scratch. (Delete all you currently have in there and start all over to get Ansible to run successfully)
+
+You can watch a 10 mins video here to guide you through the entire setup
+
+Note: Ensure that Ansible runs against the Dev environment successfully. Errors to watch out for:
+
+Ensure that the git module in Jenkinsfile is Checking out SCM to main branch instead of master (Github has discontinued the use of Master due to Black Lives Matter. You can read more here)
+
+Jenkins needs to export the ANSIBLE_CONFIG environment variable. You can put the .ansible.cfg file alongside Jenkinsfile in the deploy directory. This way, anyone can easily identify that everything in there relates to deploymemnt. Then, using the Pipeline Syntax tool in Ansible, generate the sytax to create environment variables to set.
+
+https://wiki.jenkins.io/display/JENKINS/Building+a+software+project
+
+_images/Jenkins-Workspace-Env-Var.png
+
+Possible issues to watch out for while you implement this
+
+Remember that ansible.cfg must be exported to environment variable so that Ansible knows where to find Roles. But because you will possibly run Jenkins from different git branches, the location of Ansible roles will change. Therefore, you must handle this dynamically. You can use Linux Stream Editor sed to update the section roles_path each time there is an execution. You may not have this issue if you run only from the main branch.
+
+If you push new changes to Git so that Jenkins failure can be fixed. You might observe that your change may sometimes have no effect. Even though your change is the actual fix required. This can be because Jenkins did not download the latest code from github. Ensure that you start the Jenkinsfile with a clean up step to always delete the previous workspace before running a new one. Sometimes you might need to login to the Jenkins Linux server to verify the files in the workspace to confirm that what you are actually expecting is what is there. Otherwise you can spend hours trying to figure out why Jenkins is still failing, when you have pushed up possible changes to fix the error.
+
+Another possible reason for Jenkins failure sometimes, is because you have indicated in the Jenkinsfile to checkout the main git branch, and you are running a pipeline from another branch. So, always verify by logging onto the Jenkins box to check the workspace, and run git branch command to confirm that the branch you are expecting is what is there.
+
+If everything goes well for you, it means, the Dev environment has an up-to-date configuration. But what if we need to deploy to other environments?
+
+Are we going to manually update the Jenkinsfile to point inventory to those environments? such as sit, uat, pentest etc…
+
+Or do we need a dedicated git branch for each environment, and have the inventory part hard coded there.
+
+Think about those for a minute and try to work out which one sounds more like a better solution.
+
+Manually updating the Jenkinsfile is definitely not an option. And that should be obvious to you at this point. Because we try to automate things as much as possible.
+
+Well, unfortunately, we won’t be doing any of the highlighted options. What we will be doing is to parameterise the deployment. So that at the point of execution, the appropriate values are applied.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Build Failed Issue :
+
+Check for below command in Jenkins Server in linux Env:
+`whereis git`
+you will get the path like /usr/bin/git
+
+Place it in Manage jenkin>Global Tool Configuration> under git path mention /usr/bin/git
+
+Rerun job again
+---------------------------------------------------------------------
+Notice that this pipeline is a mutlibranch one. This means, if there were more than 1 branch from git, Jenkins will scan the repository to discover them all and we will be able to trigger a build against each branch.
+
+Lets see this in action.
+
+Create a new git branch and name it feature/jenkinspipeline-stages
+
+Currently we only have the Build stage. Lets add another stage Test. 
+Paste the code snippet below and push the new changes to git.
+Below this add the folowing:
+
+
+
+git clone https://github.com/sidahal2018/config-mgt-ansible.git
+ls -l
+cd config-mgt-ansible/
+git branch
+git branch feature/jenkinspipeline-stages
+git checkout feature/jenkinspipeline-stages
+ls -l
+cd deploy
+ls -l
+vi Jenkinsfile
+git status
+git add .
+git status
+git commit -m "adding test stage on jenkinsfile"
+git push -u origin feature/jenkinspipeline-stages
+
+---------------------------------------------------------
+QUICK TASK FOR YOU!
+1. Create a pull request so as to merge the latest code into the `main branch`
+2. After merging the `PR`, go back into your terminal and switch into the `main` branch.
+git checkout master
+cd deploy and we check the jenkins file to see if the latest changes has been merged or not
+vi Jenkinsfile
+No latest chnages reflected yet.
+3. Pull the latest change.
+to get the latest chnages we do 
+git pull origin master
+
+4. Create a new branch, add more stages into the Jenkins file to simulate below phases. (Just add an `echo` command like we have in `build` and `test` stages)
+   1. Package 
+   2. Deploy 
+   3. cleanup
    
-```
-* `systemctl restart sshd`
-* `systemctl status sshd`
-
-Ansible uses a configuration file to customize settings. The file is `ansible.cfg` file. It can be located anywhere. We just need to export an environmetal variable to let Ansible know where to find this file.  Create a new file and name it ansible.cfg . Update it with the below content
-```
- [defaults]
-timeout = 160
-roles_path =/home/sidahal2018/Ansible/roles
-callback_whitelist = profile_tasks
-log_path=~/ansible.log
-host_key_checking = False
-gathering = smart
-
-[ssh_connection]
-ssh_args = -o ControlMaster=auto -o ControlPersist=30m -o ControlPath=/tmp/ansible-ssh-%h-%p-%r -o ServerAliveInterval=60 -o ServerAliveCountMax=60
-
-```
-
-we specify the full path to your roles. If you do not do this, any role you download through galaxy will be installed in the default settings which could either be in `/etc/ansible/ansible.cfg or ~/.ansible.cfg`
-
-Run the export command on the terminal to let Ansible know where to find the configuration file. export ANSIBLE_CONFIG=<FULL PATH TO YOUR ansible.cfg File>
-
-Exporting my config file only persists for one session, typically a shell script is used in a work environment.
-Export environment variable everytime or we can put in the bash_rc `~/.bash_rc`
-
-`export ANSIBLE_CONFIG=/home/sidahal2018/Ansible/ansible.cfg`
-
-We can search environment using the below command 
- `env | grep ANSIBLE`   
-
-
-## Introducing Mysql Ansible Role ##
-
-Here I am going to implement mysql role downloaded ansible galaxy
-
-run the command `ansible-galaxy install geerlingguy.mysql`. 
-Once downloaded, rename the folder to `mysql`
-`sudo mv geerlingguy.mysql mysql`
-
-Implementing mysql role for tooling website:
-MySQL role is going to install and configure MySQL database on the Target host.
-
-1. Install MySQL and other packages.
-2. Start the MySQL service and enable it to start at boot.
-3. Set the MySQL  password.
-4. Create a database for tooling.
-5. Create a database user for tooling.
-
-On mysql role, using `defaults/main.yml` to define the variable, add the following :
-```
-  tooling_db_username: "siki"
-  tooling_db_password: "siki"
-  tooling_db_name: "tooling_db"
-
-```
-We are going to template the `tooling_db.sql file` for mysql becasue we need to use it to load the data initial data. However we dont need to put any variable inside the file since it will load directly as it is on the script
-We are going to use the ansible mysql module for the create and insert statements
-
-```
-   We create new directory called files.Inside the files directory we reate tooling_db.sql 
-   file copy and paste the tooling_db.sql scripts
-
-```
-
-On our mysql roles, under tasks folder create `load-mysql.yml` file and add the following tasks:
-
-
-```
-
-  ---
-- name: Creating MySQL user for toooling website
-  mysql_user:
-    name: "{{ tooling_db_username }}"
-    password: "{{ tooling_db_password }}"
-    priv: "{{ tooling_db_name }}.*:ALL"
-    state: present
-
-- name: Creatinng new database
-  mysql_db:
-    name: "{{ tooling_db_name }}"
-    state: present
-
-- name: Create target directory
-  file: 
-   path: /temp
-   state: directory 
-   mode: 0755
-
-- name: copy the sql file onto the server
-  copy:
-   src: tooling-db.sql
-   dest: /temp/tooling-db.sql
-
-- name: Restoring DB
-  mysql_db:
-    name: "{{ tooling_db_name }}"
-    login_user: "{{ tooling_db_username }}"
-    login_password: "{{ tooling_db_password }}"
-    state: import
-    target: /temp/tooling-db.sql
-  tags:
-    - restore_db
-
-```
-
-Verifing by connecting to mysql Database
-Now logining to the credentials we have created
-
-`mysql -u siki -p`
-
-Enter password: 
-For remote login we use the following:
-
-`mysql -h 35.232.163.181 -u siki -p`
-
-
-![](./images/mysql-query.PNG)
-We are successfuly able to loginto the user name and password we have created
-
-## Introducing Nginx Ansible Role ##
-
-Install the nginx packages.
-
-Start the nginx service and enable it to start at boot.
-
-Copy the  Nginx virtual host configuration template file from the Ansible control machine to the Ansible Target host.
-
-Configure letsencrypt as part of nginx role
-
-On nginx role, using `defaults/main.yml` to define the variable, add the following :
-```
- 
-  defaults file for nginx
-  certbot_site_names: "sikisharm.ml"
-  server_name: "sikisharm.ml"
-  tooling_root_dir: "/var/www/html/tooling/html"
-  certbot_package: "python-certbot-nginx"
-  certbot_plugin: "nginx"
-  certbot_mail_address: sidahal@gmail.com
-  enable_nginx_lb: false
-  load_balancer_is_required: false
-
-```
-on the handlers main.yml 
-
-```
-   ---
-   # handlers file for nginx
-   - name: restart nginx
-    service: name=nginx state=restarted
-
-   - name: start nginx
-    service: name=nginx state=started
-
-
-
-````
-on the tasks folder we have the follwing YAML files
- 
-auto-RenewalCron.yml
-configure_nginx.yml
-install-packages.yml 
-setup-ssl.yml
-main.yml
- 
- `auto-RenewalCron.yml`
-  ```
-    `---
-     - name: Set Letsencrypt Cronjob for Certificate Auto Renewal
-      cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
-      when: ansible_facts['os_family'] == "RedHat"
-
-  ```
-
-
-  `configure_nginx.yml`
- ```
-  ---
-- name: clone tooling website from github
-  git:
-   repo: https://github.com/darey-io/tooling.git
-   dest: /var/www/html/tooling
-   clone: yes
-   force: yes
-
-- name: Creating sites-available directory on host for Nginx
-  file:
-    path: /etc/nginx/{{ item }}
-    state: directory
-    mode: '0755'
-  with_items:
-   - sites-available
-   - sites-enabled
-
-
-- name: Deploy nginx configuation file
-  template:
-     src: nginx-tooling.j2
-     dest: "/etc/nginx/nginx.conf"
-     force: yes
-  notify:
-   - restart nginx
-
-- name: Deploy nginx configuation file
-  template:
-     src: nginx-configuration.j2
-     dest: "/etc/nginx/sites-available/{{ server_name }}.conf"
-     force: yes
-  notify:
-   - restart nginx
-
-- name: Enable tooling website
-  file:
-    src: "/etc/nginx/sites-available/{{ server_name }}.conf"
-    dest: "/etc/nginx/sites-enabled/{{ server_name }}.conf"
-    state: link
-    force: yes
-  notify:
-   - restart nginx
-
-- name: de-activate default nginx 
-  file:
-    path: /usr/share/nginx/html/index.html
-    mode: '0755'
-    state: absent
-  notify:
-   - restart nginx
-
-
-- name: Add enabled Nginx site to /etc/hosts
-  lineinfile:
-    dest: /etc/hosts
-    regexp: "127.0.0.1"
-    line: "18.234.60.170 {{ server_name }}"
-  notify:
-   - restart nginx
-
- ```
-
-
-`install-packages.yml`
- 
-    ---
-    - name: install necessary packages
-      package: name={{item}} update_cache=yes state=present
-      with_items:
-      - epel-release
-      - nginx
-      - git
-      - php
-      - php-gd
-      - php-mysqli
-      notify:
-      - start nginx 
-
-
-`setup-ssl.yml`
-
-    ---
-    - name: Install Python Package
-      yum: name=python3 update_cache=yes state=latest
-
-     #   - name: Enable EPEL Repository on CentOS 8
-     #   dnf: name=epel-release update_cache=yes state=latest
-
-     # - name: install certbot
-     #   yum: name=certbot update_cache=yes state=present
-
-     - name : Install Let's Encrypt Package
-     yum: name={{ certbot_package }} update_cache=yes state=latest
- 
-     # # free-form (string) arguments, some arguments on separate lines with the 'args' keyword
-      # # 'args' is a task keyword, passed at the same level as the module
-      # - name: Run command if /path/to/database does not exist (with 'args' keyword)
-      #   command: /usr/bin/make_database.sh db_user db_name
-      #   args:
-      #     creates: /path/to/database
-
-
-      - name: Create and Install Cert 
-      command: "certbot --{{ certbot_plugin }} -d  {{ server_name }} -m {{ certbot_mail_address }} --agree-tos    --    noninteractive --redirect"
-      #   # args:
-      #   #   creates: /path/to/database
-
-
-`main.yml`
-
-    ---
-    # tasks file for nginx
-    - include_tasks: install-packages.yml
-    - include_tasks: configure_nginx.yml
-    - include_tasks: setup-ssl.yml
-      when: ansible_os_family == 'RedHat'
-    - include_tasks: auto-RenewalCron.yml
-
-
-Nginx configuration file should like the below :
-
-
-      server {
-        server_name  sikisharm.ml;
-        root         /var/www/html/tooling/html;
-        index        login.php index.htm;
-        # Load configuration files for the default server block.
-        include /etc/nginx/default.d/*.conf;
-        location / {
+git branch feature/jenkinspipeline-more-stages
+git checkout feature/jenkinspipeline-more-stages
+cd deploy
+ls -l
+vi Jenkinsfile
+
+pipeline {
+    agent any
+
+
+  stages {
+    stage('Build') {
+      steps {
+        script {
+          sh 'echo "Building Stage"'
         }
-        error_page 404 /404.html;
-            location = /40x.html {
+      }
+    }
+
+
+    stage('Test') {
+      steps {
+        script {
+          sh 'echo "Testing Stage"'
         }
-        error_page 500 502 503 504 /50x.html;
-      listen 443 ssl; # managed by Certbot
-      ssl_certificate /etc/letsencrypt/live/sikisharm.ml/fullchain.pem; # managed by Certbot
-      ssl_certificate_key /etc/letsencrypt/live/sikisharm.ml/privkey.pem; # managed by Certbot
-      include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-      ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
       }
-      server {
-      if ($host = sikisharm.ml) {
-        return 301 https://$host$request_uri;
-      } # managed by Certbot
-        listen       80;
-        server_name  sikisharm.ml;
-      return 404; # managed by Certbot
+    }
+	  stage('Package') {
+      steps {
+        script {
+          sh 'echo "Packaging Stage"'
+        }
       }
-                                                        
+    }
+	  stage('Deploy') {
+      steps {
+        script {
+          sh 'echo "Deploying Stage"'
+        }
+      }
+    }
+	
+	  stage('cleanup') {
+      steps {
+        script {
+          sh 'echo "cleaning Stage"'
+        }
+      }
+    }
+	
+	
+    }
+}
 
-Let's verify nginx rendering the tooling website page correctly or not
+git status
+git add .
+git commit -m "adding more stages on jenkinsfile"
+git push -u origin feature/jenkinspipeline-more-stages
 
-Create/Update DNS Record
-----------------------------------
-I have domain from the freenom, I am going to update the DNS record. 
-create an A/CNAME record for my domain- sikisharm.ml
-
-Login into your  Freenom account.
-Naviate to services and click on mydomain as shown below:
-
-![](./images/Manage-domain.PNG)
-![](./images/Manage-Dns.PNG)
-![](./images/update-records.PNG)
-
-Wait for some time to let the record propagate.
-Check the DNS propagation using Nslookup 
-`yum install -y bind-utils utility`
-
-Run the playbooks
--------------------------------
-`sudo ansible-playbook -i ../inventory/dev site.yml`
-
-![](./images/runtheplaybook.PNG)
-
-Verify Let’s Encrypt Certificate
--------------------------------
-Verify the Let’s Encrypt certificate by visiting the HTTPS version of your website.
-
-https://sikisharm.ml
-
-You should now get an HTTPS version of your site.
-
-
-![](./images/SSL-certificate.PNG)
-
-## Introducing  Ansible Apache Role ## 
-This role is downloaded from ansible glaxy from geerlingguy 
-Apache role will install and configure Apache on the Target host. 
-Start the Apache service and enable it to start at boot.
-Copy the Apache virtual host configuration template file from the Ansible control machine to the Ansible Target host.
-
- `ansible-galaxy install geerlingguy.apache`
- `sudo mv geerlingguy.apache apache`
-
-`configure-apache.yml`
-
-
-
-        ---
-        - name: clone tooling website from github
-        git:
-        repo: https://github.com/darey-io/tooling.git
-        dest: /var/www/html/tooling
-        clone: yes
-        force: yes
-
-        - name: Creating sites-available directory on host for httpd
-        file:
-        path: /etc/httpd/{{ item }}
-        state: directory
-        mode: '0755'
-        with_items:
-          - sites-available
-          - sites-enabled
-
-
-        - name: update main httpd configuation file
-        template:
-        src: centos-config.j2
-        dest: "/etc/httpd/conf/httpd.conf"
-        force: yes
-        notify:
-        - restart apache
-
-        - name: Set up Apache virtuahHost
-        template:
-        src: tooling-config.j2
-        dest: /etc/httpd/sites-available/{{ http_host }}.conf
    
-        - name: Enable tooling website
-        file:
-        src: "/etc/httpd/sites-available/{{ http_host }}.conf"
-        dest: "/etc/httpd/sites-enabled/{{ http_host }}.conf"
-        state: link
-        force: yes
-        notify:
-        - restart apache
+5. Verify in Blue ocean that all the stages are working, then merge your feature branch to the main branch
 
-        - name: de-activate default httpd page
-        file:
-        path: /etc/httpd/conf.d/welcome.conf
-        mode: '0755'
-        state: absent
-        notify:
-        - restart apache
+We do the Pull request and merge to main branch
+6. Eventually, your main branch should have a successful pipeline like this in blue ocean
+Naviage to config-mgt-ansible
+Cick on scan repository New
 
-        # - name: Add enabled Nginx site to /etc/hosts
-        #   lineinfile:
-        #     dest: /etc/hosts
-        #     regexp: "127.0.0.1"
-        #     line: "35.222.190.156 {{ server_name }}"
-
-Templating the configuration file 
-`centos-config.j2`
-
-    ServerRoot "/etc/httpd"
-    Listen 80
-    Include conf.modules.d/*.conf
-    User apache
-    Group apache
-    ServerAdmin root@localhost
-      <Directory />
-      AllowOverride none
-      Require all denied
-      </Directory>
-      DocumentRoot "/var/www/html"
-
-      <Directory "/var/www">
-      AllowOverride None
-      Require all granted
-      </Directory>
-      <Directory "/var/www/html">
-      Options Indexes FollowSymLinks
-      AllowOverride None
-      Require all granted
-      </Directory>
-      <IfModule dir_module>
-      DirectoryIndex index.html 
-      </IfModule>
-      <Files ".ht*">
-      Require all denied
-      </Files>
-      ErrorLog "logs/error_log"
-      LogLevel warn
-      <IfModule log_config_module>
-      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
-      LogFormat "%h %l %u %t \"%r\" %>s %b" common
-      <IfModule logio_module>
-      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
-      </IfModule>
-      CustomLog "logs/access_log" combined
-      </IfModule>
-      <IfModule alias_module>
-      ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
-      </IfModule>
-
-    <Directory "/var/www/cgi-bin">
-    AllowOverride None
-    Options None
-    Require all granted
-    </Directory>
-    <IfModule mime_module>
-    TypesConfig /etc/mime.types
-    AddType application/x-compress .Z
-    AddType application/x-gzip .gz .tgz
-    AddType text/html .shtml
-    AddOutputFilter INCLUDES .shtml
-
-    </IfModule>
-    AddDefaultCharset UTF-8
-
-    <IfModule mime_magic_module>
-     MIMEMagicFile conf/magic
-    </IfModule>
-    EnableSendfile on
-    <IfModule mod_http2.c>
-    Protocols h2 h2c http/1.1
-    </IfModule>
-    IncludeOptional conf.d/*.conf
-    IncludeOptional sites-enabled/*.conf
+In Blue Ocean, you can now see how the Jenkinsfile has caused a new step in the pipeline to show up for the new branch.
+----------------------------------------------------------------------------------------------------------------------------
 
 
-`tooling-config.j2`
-
-    <VirtualHost *:{{ http_port }}>
-      ServerAdmin webmaster@{{ http_host }}
-      ServerName {{ http_host }}
-      ServerAlias www.{{ http_host }}/tooling/html
-      DocumentRoot /var/www/{{ http_host }}/tooling/html
-   
-
-      <Directory /var/www/{{ http_host }}/tooling/html>
-       Options -Indexes
-      </Directory>
-
-      <IfModule mod_dir.c>
-       DirectoryIndex index.php index.html index.cgi index.pl  index.xhtml index.htm
-      </IfModule>
-
-    </VirtualHost>
 
 
-## Indroducing Java and Jenkins Role ## 
-Lets install Jenkins role from the Ansible community
-Since Jenkins require JAVA to work, lets install Java Role first before we install Jenkins role
-
- `ansible-galaxy install geerlingguy.jenkins`
-  `sudo mv geerlingguy.java java`
-Similarly, we install jenkins role, Run the command below to install an Ansible Role for Jenkins
-
-`ansible-galaxy install geerlingguy.jenkins`
-`sudo mv geerlingguy.jenkins jenkins`
-Now we have the Java and Jenkins roles are install, let import the jenkins.yml and java.yml file in the site.yml
-update "site.yml" file and import playbook "jenkins.yml" and "java.yml" files, which will call for "jenkins" role and java role respectively
-
-  on our Jenkins role: `deafault/main.yml`
-
-  To install the list of plugins
-
-  jenkins_plugins:
-  - git
-  - maven-plugin
-
-  Alternatively:
-
-  jenkins_plugins: [git, maven-plugin]
-
------------------------------------------------------------------------------------------
-To install a list of plugins, you may do this:
-
-    - name: Install Jenkins plugins
-    jenkins_plugin:
-    name: "{{ item }}"
-    jenkins_home: "{{ jenkins_home_directory }}"
-    url_username: "admin_username"
-    url_password: "admin_password"
-    state: present
-    with_dependencies: yes
-    with_items:
-    - git
-    - maven
-
- Lets check the jenkins installation on browser "public ip:8080" and verify `blue ocean` plugin installed
-  To check Jenkins is installed or not
-  `sudo service jenkins status/start/restart`
-  `chkconfig jenkins on` >> enabled on reboot, jenkins will start automatically
-
- ![](./images/images_plugin_blueocean.PNG)
-
- ![](./images/pipeline-jenkins.PNG)
 
 
-#### Indroducing Nginx as a load balancer ####
-
-HAProxy is free, open source, highly available, load balancer software written by Willy Tarreau in 2000. 
-It supports both Layer 4 (TCP) and Layer 7 (HTTP) based application load balancing
-The HAproxy role is going to Installing and Configuring HAProxy Server on CentOS 8
-  - Setting Up HAProxy Logging
-  - Configuring HAProxy Front-end and Back-ends
 
 
-  Creating  HAProxy-nginx role 
-     on `handlers/main.yml`
-          ---
-          - name: start haproxy service
-            service: name=haproxy state=started
 
-          - name: lb restart
-            service: name=haproxy state=restarted
 
-          - name: restart rsyslog
-            service: name=rsyslog state=restarted
 
-on the `tasks/main.yml`
 
-      - name: upadte /etc/hosts file for load balancer
-      lineinfile:
-      dest: /etc/hosts
-      regexp: "127.0.0.1"
-      line: "18.234.60.170 {{ server_name }}"
-      notify:
-      - restart nginx
 
-      - name: upadte /etc/hosts file webserver
-      lineinfile:
-      dest: /etc/hosts
-      regexp: "127.0.0.1"
-      line: "18.234.60.170 {{ server_name }}"
-      notify:
-      - restart nginx
------------------------------------------------------------------
 
-##### Submitted the solution for review and feedback.Thank you !!! #####
+
+

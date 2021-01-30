@@ -1,0 +1,24 @@
+
+# tasks file for artifactory
+---
+- name: download and add the key
+  shell: wget -qO - https://api.bintray.com/orgs/jfrog/keys/gpg/public.key | sudo apt-key add
+  
+
+
+- name: JFrog Artifactory repository
+  apt_repository: 
+    repo: deb https://jfrog.bintray.com/artifactory-debs bionic main
+    state: present 
+    update_cache: yes
+
+
+
+- name: install package
+  package:
+    name: jfrog-artifactory-oss
+    state: present
+    update_cache: yes
+
+  notify:
+  - start and enable artifactory
