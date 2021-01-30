@@ -1,9 +1,10 @@
 ---
+- import_playbook: ../roles/apache.yml
 - import_playbook: ../roles/artifactory.yml
 # - import_playbook: ../static-assignments/common.yml
 # - import_playbook:  ../static-assignments/webservers.yml
 # - import_playbook: ../roles/nginx.yml
-# - import_playbook: ../roles/apache.yml
+
 
 # - import_playbook: ../roles/mysql.yml
 # - import_playbook: ../roles/java.yml
