@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -9,6 +8,12 @@ pipeline {
           git 'https://github.com/sidahal2018/config-mgt-ansible.git'
       }
     }
+	  stage('Execute Ansible') {
+      steps {
+          ansiblePlaybook disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
+      }
+    }
+	
 		
     }
 
