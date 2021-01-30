@@ -1,16 +1,15 @@
+
 pipeline {
     agent any
-    stages {
-	stage('SCM checkout'){
-        step {
-            git 'https://github.com/sidahal2018/config-mgt-ansible.git'
-        }
-		}
-		
-	stage('Execute ansible-playbook'){
-        step{
-            ansiblePlaybook disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
-        }
+
+
+  stages {
+    stage('SCM checkout') {
+      steps {
+          git 'https://github.com/sidahal2018/config-mgt-ansible.git'
+      }
     }
-}
+		
+    }
+
 }
