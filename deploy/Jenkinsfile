@@ -10,7 +10,7 @@ pipeline {
     }
 	  stage('Execute Ansible') {
       steps {
-          pwd
+          sh 'pwd'
       }
     }
 	
