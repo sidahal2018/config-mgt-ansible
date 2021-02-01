@@ -245,16 +245,13 @@ Navigate to Jenkins URL
 
 Install & Open up Blue Ocean Jenkins Plugin
 
-Create a new pipeline _images/Jenkins-Create-Pipeline.png
-
+Create a new pipeline
 ![image](images/pipeline-jenkins.PNG)
 
 Select GitHub
 
-
-
 Connect Jenkins with Github
-![image](images/Jenkins-Create-Access-Token-To-Github.png)
+![image](images/Jenkins-Create-Access-Token-To-Github.PNG)
 
 
 Login to Github & Generate An Access Token
@@ -274,14 +271,14 @@ Create Pipeline
 _images/Create-Pipeline.png
 
 At this point you may not have a Jenkins file in the ansible repository, so blue ocean will attempt to give you some guidance to create one. But we dont’t need that. We will rather create one ourself. So click on Administration to exit the blue ocean console.
-![image](images/Jenkins-Exit-Blue-Ocean.png)
+![image](images/Jenkins-Exit-Blue-Ocean.PNG)
 Here is our newly created pipeline. It takes the name of your github repository
 
 _images/Jenkins-Ansible-Pipeline.png
 
 Lets create our Jenkinsfile
 Within the Ansible project, create a new folder deploy and a new file Jenkinsfile inside the folder.
-![image](images/Ansible-Folder-Structure.png)
+![image](images/Ansible-Folder-Structure.PNG)
 
 Add the code snippet below to start building the jenkinsfile gradually. This pipeline currently has just one stage called Build and the only thing we are doing is using the shell script module to echo Building Stage
 
@@ -362,7 +359,7 @@ Navigate to the ansible project and Click on scan now _images/Jenkins-Scan-Repos
 Refresh the page and both branches will start building automatically. You can go into Blue Ocean, and see both branches there too. _images/Jenkins-Discover-New-Branch.png
 
 In Blue Ocean, you can now see how the Jenkinsfile has caused a new step in the pipeline to show up for the new branch.
-![image](images/Jenkins-Test-Stage-Blue-Ocean.png)
+![image](images/Jenkins-Test-Stage-Blue-Ocean.PNG)
 
 QUICK TASK FOR YOU!
 1. Create a pull request so as to merge the latest code into the `main branch`
@@ -375,7 +372,7 @@ QUICK TASK FOR YOU!
 
 5. Verify in Blue ocean that all the stages are working, then merge your feature branch to the main branch
 6. Eventually, your main branch should have a successful pipeline like this in blue ocean
-![image](images/Jenkins-Complete-Initial-Pipeline.png)
+![image](images/Jenkins-Complete-Initial-Pipeline.PNG)
 
 Running Ansible Playbook From Jenkins
 Now that you have a broad overview of a typical Jenkins pipeline. Lets get the actual ansible deployment to work by
