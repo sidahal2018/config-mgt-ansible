@@ -10,7 +10,7 @@ pipeline {
     }
 	  stage('Execute Ansible') {
       steps {
-          ansiblePlaybook disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
+          pwd
       }
     }
 	
