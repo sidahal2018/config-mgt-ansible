@@ -1,20 +1,23 @@
-pipeline {
+
+ pipeline {
     agent any
 
 
   stages {
     stage('SCM checkout') {
       steps {
-          git 'https://github.com/sidahal2018/config-mgt-ansible.git'
-      }
-    }
-	  stage('Execute Ansible') {
-      steps {
-          sh 'pwd'
-      }
-    }
-	
-		
-    }
+       checkout([$class: 'GitSCM',
+	  branches: [[name: '*/feature/project14']],
+          userRemoteConfigs: [[url: 'https://github.com/sidahal2018/config-mgt-ansible.git']],
+          extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'deployment']]])
 
+      }
+    }
+    stage('Execute Ansible') {
+      steps {
+          ansiblePlaybook disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
+      }
+    }
+    }
 }
+
