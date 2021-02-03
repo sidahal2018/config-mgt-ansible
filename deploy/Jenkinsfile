@@ -1,6 +1,8 @@
-
- pipeline {
+pipeline {
     agent any
+    environment {
+       ANSIBLE_CONFIG=/var/lib/jenkins/jobs/config-mgt-ansible/workspace/deployment/deploy/.ansible.cfg
+    }
 
 
   stages {
@@ -13,6 +15,13 @@
 
       }
     }
+	stage('Export ansible.cfg') {
+      steps {
+          sh 'export $ANSIBLE_CONFIG'
+      }
+    }
+	
+	
     stage('Execute Ansible') {
       steps {
           ansiblePlaybook credentialsId: 'private-key-tooling', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
@@ -20,4 +29,3 @@
     }
     }
 }
-
