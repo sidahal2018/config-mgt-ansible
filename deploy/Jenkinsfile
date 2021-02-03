@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-    ANSIBLE_CONFIG='/var/lib/jenkins/jobs/config-mgt-ansible/branches/feature-project14.bumlt0/workspace/deployment/roles/ansible.cfg'
+    ANSIBLE_CONFIG='/var/lib/jenkins/jobs/config-mgt-ansible/branches/feature-project14.bumlt0/workspace/deployment/deploy/ansible.cfg'
     }
 
 
