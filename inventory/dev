@@ -1,5 +1,5 @@
 [tooling]
-34.67.229.82 ansible_user=root
+34.67.229.82 ansible_user=root ansible_ssh_pass=chakra
 
 [todo]
 18.194.38.231
