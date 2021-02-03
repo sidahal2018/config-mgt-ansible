@@ -17,7 +17,7 @@ pipeline {
     }
 	stage('Export ansible.cfg') {
       steps {
-          sh 'export $ANSIBLE_CONFIG'
+          sh 'export ANSIBLE_CONFIG=$ANSIBLE_CONFIG'
       }
     }
 	
