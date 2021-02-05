@@ -1,4 +1,4 @@
 [tooling]
-35.192.8.45ansible_user=root ansible_ssh_pass=chakra
+35.192.8.45 ansible_user=root ansible_ssh_pass=chakra
 
 
