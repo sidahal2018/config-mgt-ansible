@@ -1,17 +1,4 @@
 [tooling]
-35.192.93.222 
+35.192.93.222 ansible_user=root ansible_pass=chakra
 
-[todo]
-35.193.243.32
-
-[nginx]
-18.159.134.56
-
-[db:vars]
-ansible_user=ec2-user
-ansible_python_interpreter=/usr/bin/python
-
-
-[db]
-18.192.42.151
 
