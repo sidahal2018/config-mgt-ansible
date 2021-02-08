@@ -3,9 +3,19 @@ pipeline {
     environment {
     ANSIBLE_CONFIG='/var/lib/jenkins/jobs/config-mgt-ansible/branches/feature-project14.bumlt0/workspace/deployment/deploy/ansible.cfg'
     }
+ parameters {
+      string(name: 'inventory_file', defaultValue: 'dev',  description: 'This is the inventory file for the environment to deploy configuration')
+    }
 
-
-  stages {
+	
+stages {
+     stage("Initial cleanup") {
+          steps {
+            dir("${WORKSPACE}") {
+              deleteDir()
+            }
+          }
+        }
     stage('SCM checkout') {
       steps {
        checkout([$class: 'GitSCM',
@@ -24,7 +34,7 @@ pipeline {
 	
     stage('Execute Ansible') {
       steps {
-          ansiblePlaybook credentialsId: 'private-key-tooling', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
+          ansiblePlaybook credentialsId: 'private-key-tooling', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/${inventory_file}', playbook: 'playbooks/site.yml'
       }
     }
     }
