@@ -3,6 +3,10 @@ pipeline {
     environment {
     ANSIBLE_CONFIG='/var/lib/jenkins/jobs/config-mgt-ansible/branches/feature-project14.bumlt0/workspace/deployment/deploy/ansible.cfg'
     }
+ parameters {
+      string(name: 'inventory_file', defaultValue: 'dev',  description: 'This is the inventory file for the environment to deploy configuration')
+      string(name: 'ansible_tag', defaultValue: '',  description: 'This is the tag to decide what role or playbook to run')
+    }
 	
 stages {
     stage('SCM checkout') {
@@ -23,7 +27,7 @@ stages {
 	
     stage('Execute Ansible') {
       steps {
-          ansiblePlaybook credentialsId: 'private-key-tooling', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
+          ansiblePlaybook credentialsId: 'private-key-tooling', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/${inventory_file}', playbook: 'playbooks/site.yml'
       }
     }
     }
