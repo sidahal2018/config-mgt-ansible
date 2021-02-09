@@ -1,7 +1,7 @@
 
 ## Experience Continous Integration With Jenkins | Ansible | Artifactory | Sonarqube | PHP ##
 
-WARNING! - This project has a bit of initial theoretical concepts. PLEASE READ! If you need to, READ AGAIN! until it sinks in. It is one of the most important and fundamental concept in DevOps.
+Let's discuss the most important and fundamental concept in DevOps.
 
 In the past, you have been working on Linux and Ansible and just a basic overview with hands on Jenkins. Here, there is a lot to understand and do. Therefore, there will be a bit of theory at the start. But trust me, it is all worth it. This will set the stage for you to truly understand why you need to build and configure the things that will be happening in this project.
 
