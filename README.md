@@ -1078,8 +1078,7 @@ https://github.com/ymajik/ansible-role-wireshark (Ubuntu)
 
 https://github.com/wtanaka/ansible-role-wireshark (redhat)
 
-Experienced one of the most interesting projects in PBL. The vaste experience and knowledge you have acquired here will set the stage for the next projects to come. 
-
+Experienced one of the most interesting projects in PBL. 
 
 
 
