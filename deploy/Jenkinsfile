@@ -27,7 +27,7 @@ stages {
 	
     stage('Execute Ansible') {
       steps {
-          ansiblePlaybook credentialsId: 'private-key-tooling', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/${inventory_file}', playbook: 'playbooks/site.yml'
+          ansiblePlaybook credentialsId: 'private-key-tooling', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/${params.inventory_file}', playbook: 'playbooks/site.yml'
       }
     }
     }
