@@ -30,5 +30,10 @@ stages {
           ansiblePlaybook credentialsId: 'private-key-tooling', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/${params.inventory_file}', playbook: 'playbooks/site.yml'
       }
     }
+stage ('Deploy to Dev Environment') {
+    steps {
+    build job: 'config-mgt-ansible/feature/project14', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
+    }
+  }
     }
 }
