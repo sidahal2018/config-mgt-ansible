@@ -32,7 +32,7 @@ stages {
     }
 stage ('Deploy to Dev Environment') {
     steps {
-    build job: 'config-mgt-ansible/edit/feature/project14', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
+    build job: 'config-mgt-ansible/feature/project14', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
     }
   }
     }
