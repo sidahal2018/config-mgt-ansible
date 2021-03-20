@@ -807,21 +807,6 @@ sonar.jdbc.url=jdbc:postgresql://localhost:5432/sonarqube
 Edit the sonar script file and set RUN_AS_USER
 
 sudo nano /opt/sonarqube/bin/linux-x86-64/sonar.sh
-# If specified, the Wrapper will be run as the specified user.
-
-# IMPORTANT - Make sure that the user has the required privileges to write
-
-#  the PID file and wrapper.log files.  Failure to be able to write the log
-
-#  file will cause the Wrapper to exit without any way to write out an error
-
-#  message.
-
-# NOTE - This will set the user which is used to run the Wrapper as well as
-
-#  the JVM and is not useful in situations where a privileged resource or
-
-#  port needs to be allocated prior to the user being changed.
 
  RUN_AS_USER=sonar
 Now to start SonarQube we need to do following:
