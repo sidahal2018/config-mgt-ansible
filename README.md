@@ -969,15 +969,8 @@ To further examing the configuration of the scanner tool on the Jenkins server -
 cd /var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarQubeScanner/bin
 List the content to see the scanner tool. sonar-scanner. That is what we are calling in the pipeline script.
 
-Output of ls -latr
 
-ubuntu@ip-172-31-16-176:/var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarQubeScanner/bin$ ls -latr
-total 24
--rwxr-xr-x 1 jenkins jenkins 2550 Oct  2 12:42 sonar-scanner.bat
--rwxr-xr-x 1 jenkins jenkins  586 Oct  2 12:42 sonar-scanner-debug.bat
--rwxr-xr-x 1 jenkins jenkins  662 Oct  2 12:42 sonar-scanner-debug
--rwxr-xr-x 1 jenkins jenkins 1823 Oct  2 12:42 sonar-scanner
-drwxr-xr-x 2 jenkins jenkins 4096 Dec 26 18:42 .
+
 So far you have been given code snippets on each of the stages within the Jenkinsfile. But, you should also know how to generate the code yourself within Jenkins.
 
 To generate the syntax in Jenkins. Navigate to the dashboard for the php-todo pipeline and click on the Pipeline Syntax menu
