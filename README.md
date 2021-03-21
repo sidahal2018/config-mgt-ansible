@@ -984,7 +984,7 @@ There are bugs, and there is 0.0% code coverage. (code coverage is the % of unit
 
 If you click on the php-todo project for further analysis, you will see that there is 6 hours worth of technical debt, code smells and security issues in the code.
 
-_images/SonarQube-Analysis2.png
+_images/SonarQube.png
 
 In the development environment, this is acceptable as developers will need to keep iterating over their code towards perfection. But as a DevOps engineer working on the pipeline, we must ensure that the quality gate step causes the pipeline to fail if the conditions for quality is not met.
 
@@ -1050,13 +1050,8 @@ Deploy the application to all the environments
 
 Optional - Experience Pentesting in the pentest environment by configuring Wireshark there and just explore for information sake only. Watch Wireshark Tutorial here
 
-Ansible Role for Wireshark
 
-https://github.com/ymajik/ansible-role-wireshark (Ubuntu)
 
-https://github.com/wtanaka/ansible-role-wireshark (redhat)
-
-Experienced one of the most interesting projects in PBL. 
 
 
 
