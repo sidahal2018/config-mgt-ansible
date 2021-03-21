@@ -1048,7 +1048,6 @@ Configure webhook between Jenkins and Github to automatically run the pipeline w
 
 Deploy the application to all the environments
 
-Optional - Experience Pentesting in the pentest environment by configuring Wireshark there and just explore for information sake only. Watch Wireshark Tutorial here
 
 
 
