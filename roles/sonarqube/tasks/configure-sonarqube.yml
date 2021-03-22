@@ -1,0 +1,32 @@
+  - name: Create sonar group
+    group:
+      name: '{{ sonar_group }}'
+      state: present
+
+  - name: Create sonar user
+    user:
+      name: '{{ sonar_user }}'
+      shell: /sbin/nologin
+      group: '{{ sonar_group }}'
+      state: present
+      home: '/home/{{ sonar_user }}'
+      createhome: true
+
+  - name: Render sonar.properties
+    template:
+      src: sonar.properties.j2
+      dest: '{{ sonar_path }}/conf/sonar.properties'
+      mode: 0400
+      owner: '{{ sonar_user }}'
+    notify: Restart Sonarqube
+
+  - name: Render sonarqube.service
+    template:
+      src: sonarqube.service.j2
+      dest: /etc/systemd/system/sonarqube.service
+      mode: 0444
+      owner: '{{ sonar_user }}'
+    notify: 
+    - Restart Sonarqube
+    - Start Sonarqube
+
