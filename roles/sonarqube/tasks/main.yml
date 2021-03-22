@@ -1,2 +1,5 @@
 ---
 # tasks file for sonarqube
+
+- include: install-sonarqube.yml
+- include: configure-sonarqube.yml
