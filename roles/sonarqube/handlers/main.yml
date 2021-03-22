@@ -1,2 +1,17 @@
 ---
 # handlers file for sonarqube
+
+
+- name: Restart Sonarqube
+  systemd:
+    name: sonarqube
+    state: restarted
+    daemon_reload: true
+    
+- name: Start Sonarqube
+  systemd:
+    name: sonarqube
+    state: started
+    daemon_reload: true
+    enabled: true
+    
