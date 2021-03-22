@@ -1,0 +1,35 @@
+---
+# tasks file for sonarqube
+  - name: Make Linux Kernel configuration changes
+    lineinfile:
+      dest: /etc/security/limits.conf
+      line: sonarqube   -   nofile   65536 
+       sonarqube   -   nproc    4096  
+  
+  - name: Install packages
+    apt: name={{ item }} update_cache=yes state=present
+    with_items:
+     - unzip
+     - wget
+     - openjdk-11-jdk
+     - openjdk-11-jre
+
+  # - name: Mkdir for SonarQube installation
+  #   file:
+  #     path: '{{ sonar_path }}'
+  #     state: directory
+  #     mode: 0755
+  #     owner: '{{ sonar_user }}'
+  #     group: '{{ sonar_group }}'
+
+  - name: download sonarqube community version
+    get_url: 
+     url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-7.9.3.zip
+     dest: "{{ sonar_path }}"
+
+  - name: Extract sonarqube into /opt/sonarqube
+    unarchive:
+     src: "{{ sonar_path }}"
+     dest: /opt/sonarqube
+     remote_src: true
+
